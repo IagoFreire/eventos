@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Event, Registration, PaymentData } from '../types';
+import type { Event, Registration, PaymentData, EventSettings } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -27,6 +27,22 @@ export const getEvent = async (eventId: string): Promise<Event> => {
 
 export const getEvents = async (): Promise<Event[]> => {
   const response = await api.get('/events');
+  return response.data;
+};
+
+export const updateEvent = async (eventId: string, data: Partial<Event>): Promise<Event> => {
+  const response = await api.put(`/events/${eventId}`, data);
+  return response.data;
+};
+
+// Configurações do Evento
+export const getEventSettings = async (eventId: string): Promise<EventSettings> => {
+  const response = await api.get(`/events/${eventId}/settings`);
+  return response.data;
+};
+
+export const updateEventSettings = async (eventId: string, settings: Partial<EventSettings>): Promise<EventSettings> => {
+  const response = await api.put(`/events/${eventId}/settings`, settings);
   return response.data;
 };
 

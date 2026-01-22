@@ -1,4 +1,4 @@
-import type { Event, Registration, User } from '../types';
+import type { Event, Registration, User, EventSettings } from '../types';
 
 // Evento mockado
 export const mockEvent: Event = {
@@ -10,6 +10,28 @@ export const mockEvent: Event = {
   price: 350.00,
   image_url: 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=800',
   max_participants: 100,
+};
+
+// Configurações do evento mockadas
+export const mockEventSettings: EventSettings = {
+  id: 'settings-1',
+  event_id: '1',
+  event_subtitle: 'Evento Especial 2026',
+  event_time: '09h00 - Início das atividades',
+  included_items: [
+    { icon: '🛏️', title: 'Hospedagem Completa', description: 'Acomodações confortáveis' },
+    { icon: '🍽️', title: 'Alimentação Incluída', description: 'Todas as refeições' },
+    { icon: '🎵', title: 'Momentos de Louvor', description: 'Adoração e música' },
+    { icon: '📖', title: 'Estudos Bíblicos', description: 'Aprofundamento espiritual' },
+    { icon: '🙏', title: 'Tempo de Oração', description: 'Momentos de intercessão' },
+    { icon: '👥', title: 'Comunhão Fraterna', description: 'Conexão com irmãos' },
+  ],
+  church_name: 'Igreja Evangélica Nova Vida',
+  church_contact_phone: '(11) 98765-4321',
+  church_contact_email: 'contato@igrejavida.com.br',
+  church_instagram: '@igrejavida',
+  church_facebook: 'igrejavida',
+  church_website: 'https://www.igrejavida.com.br',
 };
 
 // Lista de eventos mockados

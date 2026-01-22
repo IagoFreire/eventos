@@ -10,6 +10,7 @@ import Registration from './pages/Registration';
 import Confirmation from './pages/Confirmation';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
+import AdminSettings from './pages/AdminSettings';
 
 function AppContent() {
   const location = useLocation();
@@ -29,6 +30,14 @@ function AppContent() {
             element={
               <ProtectedRoute requireAdmin>
                 <Admin />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/configuracoes" 
+            element={
+              <ProtectedRoute requireAdmin>
+                <AdminSettings />
               </ProtectedRoute>
             } 
           />

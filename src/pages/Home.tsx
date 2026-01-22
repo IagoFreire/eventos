@@ -1,20 +1,36 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEvent } from '../contexts/EventContext';
 import { MapPin, Calendar, Clock, DollarSign, Users, ChevronRight } from 'lucide-react';
+import { api } from '../services/apiSelector';
+import type { EventSettings } from '../types';
 import Loading from '../components/Loading';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { currentEvent, loadEvent, loading } = useEvent();
+  const [settings, setSettings] = useState<EventSettings | null>(null);
+  const [loadingSettings, setLoadingSettings] = useState(true);
   
   const eventId = '1';
 
   useEffect(() => {
     loadEvent(eventId);
+    loadSettings();
   }, []);
 
-  if (loading) {
+  const loadSettings = async () => {
+    try {
+      const settingsData = await api.getEventSettings(eventId);
+      setSettings(settingsData);
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error);
+    } finally {
+      setLoadingSettings(false);
+    }
+  };
+
+  if (loading || loadingSettings) {
     return <Loading />;
   }
 
@@ -28,6 +44,26 @@ const Home: React.FC = () => {
     image_url: 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=800',
     max_participants: 100,
   };
+
+  const defaultSettings: EventSettings = {
+    id: 'default',
+    event_id: '1',
+    event_subtitle: 'Evento Especial 2026',
+    event_time: '09h00 - Início das atividades',
+    included_items: [
+      { icon: '🛏️', title: 'Hospedagem Completa', description: 'Acomodações confortáveis' },
+      { icon: '🍽️', title: 'Alimentação Incluída', description: 'Todas as refeições' },
+      { icon: '🎵', title: 'Momentos de Louvor', description: 'Adoração e música' },
+      { icon: '📖', title: 'Estudos Bíblicos', description: 'Aprofundamento espiritual' },
+      { icon: '🙏', title: 'Tempo de Oração', description: 'Momentos de intercessão' },
+      { icon: '👥', title: 'Comunhão Fraterna', description: 'Conexão com irmãos' },
+    ],
+    church_name: 'Igreja Evangélica',
+    church_contact_phone: '(11) 98765-4321',
+    church_contact_email: 'contato@igreja.com.br',
+  };
+
+  const eventSettings = settings || defaultSettings;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -50,9 +86,11 @@ const Home: React.FC = () => {
       {/* Hero Section */}
       <section className="relative py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-block mb-6 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-[#D4AF37]">
-            <span className="text-[#B8860B]">Evento Especial 2026</span>
-          </div>
+          {eventSettings.event_subtitle && (
+            <div className="inline-block mb-6 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-[#D4AF37]">
+              <span className="text-[#B8860B]">{eventSettings.event_subtitle}</span>
+            </div>
+          )}
           <h1 className="text-5xl md:text-6xl mb-6 text-gray-800 font-bold">
             {event.title}
           </h1>
@@ -84,10 +122,12 @@ const Home: React.FC = () => {
                   <Calendar className="w-5 h-5 text-[#B8860B]" />
                   <span>{formatDate(event.date)}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-[#B8860B]" />
-                  <span>09h00 - Início das atividades</span>
-                </div>
+                {eventSettings.event_time && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-[#B8860B]" />
+                    <span>{eventSettings.event_time}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -150,36 +190,13 @@ const Home: React.FC = () => {
         <div className="max-w-4xl mx-auto">
           <h2 className="text-4xl text-center mb-12 text-gray-800">O que está incluído</h2>
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
-              <span className="text-4xl mb-3 block">🛏️</span>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Hospedagem Completa</h3>
-              <p className="text-gray-600 text-sm">Acomodações confortáveis</p>
-            </div>
-            <div className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
-              <span className="text-4xl mb-3 block">🍽️</span>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Alimentação Incluída</h3>
-              <p className="text-gray-600 text-sm">Todas as refeições</p>
-            </div>
-            <div className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
-              <span className="text-4xl mb-3 block">🎵</span>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Momentos de Louvor</h3>
-              <p className="text-gray-600 text-sm">Adoração e música</p>
-            </div>
-            <div className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
-              <span className="text-4xl mb-3 block">📖</span>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Estudos Bíblicos</h3>
-              <p className="text-gray-600 text-sm">Aprofundamento espiritual</p>
-            </div>
-            <div className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
-              <span className="text-4xl mb-3 block">🙏</span>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Tempo de Oração</h3>
-              <p className="text-gray-600 text-sm">Momentos de intercessão</p>
-            </div>
-            <div className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
-              <span className="text-4xl mb-3 block">👥</span>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Comunhão Fraterna</h3>
-              <p className="text-gray-600 text-sm">Conexão com irmãos</p>
-            </div>
+            {eventSettings.included_items.map((item, index) => (
+              <div key={index} className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
+                <span className="text-4xl mb-3 block">{item.icon}</span>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">{item.title}</h3>
+                <p className="text-gray-600 text-sm">{item.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

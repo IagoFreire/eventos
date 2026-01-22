@@ -1,22 +1,25 @@
-import type { Event, Registration, PaymentData } from '../types';
+import type { Event, Registration, PaymentData, EventSettings } from '../types';
 import { 
   mockEvents, 
   mockRegistrations, 
   mockAdmin, 
   mockToken,
-  mockDelay 
+  mockDelay,
+  mockEventSettings 
 } from './data';
 
 // Storage local para dados durante a sessão
 let registrations = [...mockRegistrations];
 let nextRegId = registrations.length + 1;
+let events = [...mockEvents];
+let eventSettings = { ...mockEventSettings };
 
 // Mock API - Simula todas as operações do backend
 export const mockApi = {
   // Eventos
   getEvent: async (eventId: string): Promise<Event> => {
     await mockDelay();
-    const event = mockEvents.find(e => e.id === eventId);
+    const event = events.find(e => e.id === eventId);
     if (!event) {
       throw new Error('Evento não encontrado');
     }
@@ -25,7 +28,37 @@ export const mockApi = {
 
   getEvents: async (): Promise<Event[]> => {
     await mockDelay();
-    return mockEvents;
+    return events;
+  },
+
+  updateEvent: async (eventId: string, data: Partial<Event>): Promise<Event> => {
+    await mockDelay();
+    const index = events.findIndex(e => e.id === eventId);
+    if (index === -1) {
+      throw new Error('Evento não encontrado');
+    }
+    events[index] = { ...events[index], ...data };
+    console.log('✅ [MOCK] Evento atualizado:', events[index]);
+    return events[index];
+  },
+
+  // Configurações do Evento
+  getEventSettings: async (eventId: string): Promise<EventSettings> => {
+    await mockDelay();
+    if (eventSettings.event_id !== eventId) {
+      throw new Error('Configurações não encontradas');
+    }
+    return eventSettings;
+  },
+
+  updateEventSettings: async (eventId: string, settings: Partial<EventSettings>): Promise<EventSettings> => {
+    await mockDelay();
+    if (eventSettings.event_id !== eventId) {
+      throw new Error('Configurações não encontradas');
+    }
+    eventSettings = { ...eventSettings, ...settings };
+    console.log('✅ [MOCK] Configurações atualizadas:', eventSettings);
+    return eventSettings;
   },
 
   // Inscrições

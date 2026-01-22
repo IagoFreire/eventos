@@ -1,16 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { LogOut } from 'lucide-react';
+import { api } from '../services/apiSelector';
+import type { EventSettings } from '../types';
 
 const Header: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuth();
   const navigate = useNavigate();
+  const [settings, setSettings] = useState<EventSettings | null>(null);
+  const eventId = '1';
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const settingsData = await api.getEventSettings(eventId);
+      setSettings(settingsData);
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error);
+    }
+  };
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
+
+  const churchName = settings?.church_name || 'Igreja Evangélica';
 
   return (
     <header className="bg-white/80 backdrop-blur-sm border-b border-[#E8DCC4] sticky top-0 z-10">
@@ -19,7 +38,7 @@ const Header: React.FC = () => {
           <div className="w-10 h-10 bg-gradient-to-br from-[#D4AF37] to-[#B8860B] rounded-full flex items-center justify-center">
             <span className="text-white text-xl">✝</span>
           </div>
-          <span className="text-xl text-[#B8860B] font-semibold">Igreja Comunidade</span>
+          <span className="text-xl text-[#B8860B] font-semibold">{churchName}</span>
         </Link>
         
         <nav className="flex items-center gap-4">

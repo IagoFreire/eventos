@@ -112,13 +112,23 @@ const Admin: React.FC = () => {
               <span>Voltar</span>
             </button>
             
-            <button
-              onClick={() => navigate('/login')}
-              className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-[#E8DCC4] rounded-lg text-gray-700 hover:bg-white/80 hover:border-[#D4AF37] transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Sair</span>
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => navigate('/admin/configuracoes')}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white rounded-lg hover:shadow-lg transition-all"
+              >
+                <Edit2 className="w-4 h-4" />
+                <span>Configurações</span>
+              </button>
+              
+              <button
+                onClick={() => navigate('/login')}
+                className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-[#E8DCC4] rounded-lg text-gray-700 hover:bg-white/80 hover:border-[#D4AF37] transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sair</span>
+              </button>
+            </div>
           </div>
 
           <h1 className="text-4xl mb-2 text-gray-800">Painel de Administração</h1>

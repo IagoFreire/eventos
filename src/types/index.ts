@@ -9,6 +9,31 @@ export interface Event {
   max_participants?: number;
 }
 
+export interface EventSettings {
+  id: string;
+  event_id: string;
+  // Informações do Evento
+  event_subtitle?: string;
+  event_time?: string;
+  // O que está incluído
+  included_items: IncludedItem[];
+  // Informações da Igreja
+  church_name: string;
+  church_contact_phone?: string;
+  church_contact_email?: string;
+  church_instagram?: string;
+  church_facebook?: string;
+  church_website?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface IncludedItem {
+  icon: string;
+  title: string;
+  description: string;
+}
+
 export interface Registration {
   id: string;
   event_id: string;

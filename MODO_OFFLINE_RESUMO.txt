@@ -1,0 +1,73 @@
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║              🔌 MODO OFFLINE ATIVADO!                       ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+✨ COMO USAR:
+
+   npm run dev-offline
+
+
+📝 CREDENCIAIS DE TESTE:
+
+   Email: admin@igreja.com
+   Senha: admin123
+
+
+🌐 ACESSE:
+
+   http://localhost:5173
+
+
+✅ O QUE FUNCIONA:
+
+   ✓ Página inicial com eventos
+   ✓ Inscrição completa (dados em memória)
+   ✓ Login administrativo
+   ✓ Painel de administração
+   ✓ Estatísticas e dashboard
+   ✓ Busca e filtros
+   ✓ Edição de inscrições
+   ✓ Sistema de check-in
+   ✓ Simulação de pagamentos
+
+
+📊 DADOS DISPONÍVEIS:
+
+   • 3 eventos mockados
+   • 6 inscrições de exemplo
+   • 1 usuário admin
+   • Diferentes status de pagamento
+
+
+🎯 PERFEITO PARA:
+
+   • Desenvolver frontend sem backend
+   • Demonstrações e apresentações
+   • Testes de interface
+   • Onboarding de desenvolvedores
+   • Desenvolvimento offline
+
+
+⚠️ LIMITAÇÕES:
+
+   ✗ Dados não persistem após recarregar
+   ✗ Pagamentos são simulados (não reais)
+   ✗ Emails não são enviados
+
+
+📚 DOCUMENTAÇÃO COMPLETA:
+
+   OFFLINE_MODE.md
+
+
+🔄 VOLTAR AO MODO ONLINE:
+
+   Ctrl+C (parar servidor)
+   npm run dev
+
+
+═══════════════════════════════════════════════════════════════
+
+Desenvolvido para facilitar o desenvolvimento! 🚀

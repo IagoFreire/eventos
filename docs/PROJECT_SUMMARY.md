@@ -307,10 +307,11 @@ eventos/
 ## 📞 Recursos de Ajuda
 
 ### Documentação
-- README.md - Visão geral
+- ../README.md - Visão geral
 - SETUP.md - Configuração
 - QUICKSTART.md - Início rápido
 - ARCHITECTURE.md - Arquitetura
+- OFFLINE_MODE.md - Modo offline
 - MERCADOPAGO_INTEGRATION.md - Pagamentos
 
 ### Comandos Rápidos

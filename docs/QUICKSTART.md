@@ -148,9 +148,10 @@ npm install
 
 ## 📚 Documentação Completa
 
-- `README.md` - Visão geral e funcionalidades
+- `../README.md` - Visão geral e funcionalidades
 - `SETUP.md` - Configuração completa passo a passo
 - `ARCHITECTURE.md` - Arquitetura e estrutura técnica
+- `OFFLINE_MODE.md` - Modo offline com mocks
 
 ## 💡 Dicas
 

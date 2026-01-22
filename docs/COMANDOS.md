@@ -366,6 +366,11 @@ alias preview="npm run preview"
 
 ## 📞 Ajuda
 
+### Documentação Local
+- README.md - ../README.md
+- SETUP.md, QUICKSTART.md, ARCHITECTURE.md
+- OFFLINE_MODE.md, MERCADOPAGO_INTEGRATION.md
+
 ### Documentação online
 - React: https://react.dev
 - TypeScript: https://typescriptlang.org

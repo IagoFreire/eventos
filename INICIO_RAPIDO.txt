@@ -38,9 +38,9 @@
 📚 DOCUMENTAÇÃO:
 
    • README.md - Visão geral completa
-   • QUICKSTART.md - Guia de início rápido
-   • OFFLINE_MODE.md - Detalhes do modo offline
-   • SETUP.md - Configuração completa com backend
+   • docs/QUICKSTART.md - Guia de início rápido
+   • docs/OFFLINE_MODE.md - Detalhes do modo offline
+   • docs/SETUP.md - Configuração completa com backend
 
 
 ═══════════════════════════════════════════════════════════════

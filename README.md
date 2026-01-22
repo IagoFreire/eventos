@@ -258,7 +258,7 @@ npm run dev-offline
 - Email: `admin@igreja.com`
 - Senha: `admin123`
 
-Veja a documentação completa em `OFFLINE_MODE.md`
+Veja a documentação completa em [`docs/OFFLINE_MODE.md`](docs/OFFLINE_MODE.md)
 
 ## 📄 Licença
 
@@ -272,6 +272,19 @@ Para contribuir com o projeto:
 3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
 4. Push para a branch (`git push origin feature/NovaFuncionalidade`)
 5. Abra um Pull Request
+
+## 📚 Documentação Completa
+
+Toda a documentação está organizada na pasta [`docs/`](docs/):
+
+- 📖 [`QUICKSTART.md`](docs/QUICKSTART.md) - Guia de início rápido
+- ⚙️ [`SETUP.md`](docs/SETUP.md) - Configuração completa passo a passo
+- 🏗️ [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) - Arquitetura e estrutura técnica
+- 🔌 [`OFFLINE_MODE.md`](docs/OFFLINE_MODE.md) - Modo offline com mocks
+- 💳 [`MERCADOPAGO_INTEGRATION.md`](docs/MERCADOPAGO_INTEGRATION.md) - Integração de pagamentos
+- ⌨️ [`COMANDOS.md`](docs/COMANDOS.md) - Referência rápida de comandos
+- 📋 [`PROJECT_SUMMARY.md`](docs/PROJECT_SUMMARY.md) - Resumo do projeto
+- ✅ [`STATUS.md`](docs/STATUS.md) - Status e checklist do projeto
 
 ## 📞 Suporte
 

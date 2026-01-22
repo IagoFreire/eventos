@@ -253,7 +253,7 @@ npm run lint
 ## 📞 Suporte
 
 ```
-📚 Documentação: README.md
+📚 Documentação: ../README.md
 🚀 Quick Start: QUICKSTART.md
 ⚙️  Setup: SETUP.md
 🏗️  Arquitetura: ARCHITECTURE.md

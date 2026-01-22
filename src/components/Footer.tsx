@@ -1,24 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Phone, Mail, Instagram, Facebook, Globe, MapPin } from 'lucide-react';
-import { api } from '../services/apiSelector';
+import React from 'react';
+import { Phone, Mail, Instagram, Facebook, Globe } from 'lucide-react';
+import { useSettings } from '../contexts/SettingsContext';
 import type { EventSettings } from '../types';
 
 const Footer: React.FC = () => {
-  const [settings, setSettings] = useState<EventSettings | null>(null);
-  const eventId = '1';
-
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
-    try {
-      const settingsData = await api.getEventSettings(eventId);
-      setSettings(settingsData);
-    } catch (error) {
-      console.error('Erro ao carregar configurações:', error);
-    }
-  };
+  const { settings } = useSettings();
 
   const defaultSettings: EventSettings = {
     id: 'default',

@@ -1,7 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import './toastConfig.css';
 import { AuthProvider } from './contexts/AuthContext';
 import { EventProvider } from './contexts/EventContext';
 import { RegistrationProvider } from './contexts/RegistrationContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -52,11 +56,25 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <EventProvider>
-          <RegistrationProvider>
-            <AppContent />
-          </RegistrationProvider>
-        </EventProvider>
+        <SettingsProvider>
+          <EventProvider>
+            <RegistrationProvider>
+              <AppContent />
+              <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+              />
+            </RegistrationProvider>
+          </EventProvider>
+        </SettingsProvider>
       </AuthProvider>
     </Router>
   );

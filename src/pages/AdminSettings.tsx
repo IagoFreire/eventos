@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import { useEvent } from '../contexts/EventContext';
+import { useSettings } from '../contexts/SettingsContext';
 import type { Event, EventSettings, IncludedItem } from '../types';
 import { api } from '../services/apiSelector';
 import { 
@@ -30,6 +32,7 @@ const AdminSettings: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const { currentEvent, loadEvent } = useEvent();
+  const { updateSettings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'event' | 'church' | 'included'>('event');
@@ -61,7 +64,7 @@ const AdminSettings: React.FC = () => {
       setSettings(settingsData);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
-      alert('Erro ao carregar configurações');
+      toast.error('Erro ao carregar configurações');
     } finally {
       setLoading(false);
     }
@@ -74,13 +77,13 @@ const AdminSettings: React.FC = () => {
     try {
       await Promise.all([
         api.updateEvent(eventId, event),
-        api.updateEventSettings(eventId, settings)
+        updateSettings(eventId, settings) // Usa o contexto para atualizar
       ]);
-      alert('Configurações salvas com sucesso!');
-      loadEvent(eventId); // Atualiza o contexto
+      toast.success('Configurações salvas com sucesso!');
+      loadEvent(eventId); // Atualiza o contexto do evento
     } catch (error) {
       console.error('Erro ao salvar:', error);
-      alert('Erro ao salvar configurações');
+      toast.error('Erro ao salvar configurações');
     } finally {
       setSaving(false);
     }

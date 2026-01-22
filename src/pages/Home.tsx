@@ -1,34 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEvent } from '../contexts/EventContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { MapPin, Calendar, Clock, DollarSign, Users, ChevronRight } from 'lucide-react';
-import { api } from '../services/apiSelector';
 import type { EventSettings } from '../types';
 import Loading from '../components/Loading';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { currentEvent, loadEvent, loading } = useEvent();
-  const [settings, setSettings] = useState<EventSettings | null>(null);
-  const [loadingSettings, setLoadingSettings] = useState(true);
+  const { settings, loading: loadingSettings } = useSettings();
   
   const eventId = '1';
 
   useEffect(() => {
     loadEvent(eventId);
-    loadSettings();
   }, []);
-
-  const loadSettings = async () => {
-    try {
-      const settingsData = await api.getEventSettings(eventId);
-      setSettings(settingsData);
-    } catch (error) {
-      console.error('Erro ao carregar configurações:', error);
-    } finally {
-      setLoadingSettings(false);
-    }
-  };
 
   if (loading || loadingSettings) {
     return <Loading />;
@@ -45,7 +32,7 @@ const Home: React.FC = () => {
     max_participants: 100,
   };
 
-  const defaultSettings: EventSettings = {
+  const eventSettings = settings || {
     id: 'default',
     event_id: '1',
     event_subtitle: 'Evento Especial 2026',
@@ -62,8 +49,6 @@ const Home: React.FC = () => {
     church_contact_phone: '(11) 98765-4321',
     church_contact_email: 'contato@igreja.com.br',
   };
-
-  const eventSettings = settings || defaultSettings;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

@@ -8,11 +8,37 @@ import {
   mockEventSettings 
 } from './data';
 
-// Storage local para dados durante a sessão
-let registrations = [...mockRegistrations];
+// Chaves do localStorage
+const STORAGE_KEYS = {
+  EVENTS: 'mock_events',
+  EVENT_SETTINGS: 'mock_event_settings',
+  REGISTRATIONS: 'mock_registrations',
+};
+
+// Funções auxiliares para localStorage
+const loadFromStorage = <T>(key: string, defaultValue: T): T => {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  } catch (error) {
+    console.error(`Erro ao carregar ${key} do localStorage:`, error);
+    return defaultValue;
+  }
+};
+
+const saveToStorage = <T>(key: string, value: T): void => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error(`Erro ao salvar ${key} no localStorage:`, error);
+  }
+};
+
+// Storage local para dados durante a sessão (com persistência)
+let registrations = loadFromStorage<Registration[]>(STORAGE_KEYS.REGISTRATIONS, [...mockRegistrations]);
 let nextRegId = registrations.length + 1;
-let events = [...mockEvents];
-let eventSettings = { ...mockEventSettings };
+let events = loadFromStorage<Event[]>(STORAGE_KEYS.EVENTS, [...mockEvents]);
+let eventSettings = loadFromStorage<EventSettings>(STORAGE_KEYS.EVENT_SETTINGS, { ...mockEventSettings });
 
 // Mock API - Simula todas as operações do backend
 export const mockApi = {
@@ -38,6 +64,7 @@ export const mockApi = {
       throw new Error('Evento não encontrado');
     }
     events[index] = { ...events[index], ...data };
+    saveToStorage(STORAGE_KEYS.EVENTS, events);
     console.log('✅ [MOCK] Evento atualizado:', events[index]);
     return events[index];
   },
@@ -57,6 +84,7 @@ export const mockApi = {
       throw new Error('Configurações não encontradas');
     }
     eventSettings = { ...eventSettings, ...settings };
+    saveToStorage(STORAGE_KEYS.EVENT_SETTINGS, eventSettings);
     console.log('✅ [MOCK] Configurações atualizadas:', eventSettings);
     return eventSettings;
   },
@@ -74,6 +102,7 @@ export const mockApi = {
     };
     
     registrations.push(newRegistration);
+    saveToStorage(STORAGE_KEYS.REGISTRATIONS, registrations);
     console.log('✅ [MOCK] Inscrição criada:', newRegistration);
     
     return newRegistration;
@@ -98,6 +127,7 @@ export const mockApi = {
     }
     
     registrations[index] = { ...registrations[index], ...data };
+    saveToStorage(STORAGE_KEYS.REGISTRATIONS, registrations);
     console.log('✅ [MOCK] Inscrição atualizada:', registrations[index]);
     
     return registrations[index];
@@ -112,6 +142,7 @@ export const mockApi = {
     }
     
     registrations[index].checked_in = true;
+    saveToStorage(STORAGE_KEYS.REGISTRATIONS, registrations);
     console.log('✅ [MOCK] Check-in realizado:', registrations[index]);
     
     return registrations[index];
@@ -189,5 +220,13 @@ export const mockApi = {
 export const resetMockData = () => {
   registrations = [...mockRegistrations];
   nextRegId = mockRegistrations.length + 1;
+  events = [...mockEvents];
+  eventSettings = { ...mockEventSettings };
+  
+  // Limpa o localStorage
+  localStorage.removeItem(STORAGE_KEYS.REGISTRATIONS);
+  localStorage.removeItem(STORAGE_KEYS.EVENTS);
+  localStorage.removeItem(STORAGE_KEYS.EVENT_SETTINGS);
+  
   console.log('🔄 [MOCK] Dados resetados');
 };

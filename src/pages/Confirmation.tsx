@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useRegistration } from '../contexts/RegistrationContext';
 import { useEvent } from '../contexts/EventContext';
 import type { Registration } from '../types';
@@ -59,7 +60,7 @@ const Confirmation: React.FC = () => {
   };
 
   const handleDownload = () => {
-    alert('Em um aplicativo real, isso geraria um PDF do ingresso para download.');
+    toast.info('Funcionalidade de download do ingresso em desenvolvimento!');
   };
 
   const formatDate = (dateString: string) => {

@@ -1,28 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { LogOut } from 'lucide-react';
-import { api } from '../services/apiSelector';
-import type { EventSettings } from '../types';
 
 const Header: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
-  const [settings, setSettings] = useState<EventSettings | null>(null);
-  const eventId = '1';
-
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
-    try {
-      const settingsData = await api.getEventSettings(eventId);
-      setSettings(settingsData);
-    } catch (error) {
-      console.error('Erro ao carregar configurações:', error);
-    }
-  };
 
   const handleLogout = () => {
     logout();

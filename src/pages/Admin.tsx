@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import type { Registration } from '../types';
 import { api } from '../services/apiSelector';
@@ -45,9 +46,10 @@ const Admin: React.FC = () => {
       setRegistrations(registrations.map(r => 
         r.id === updated.id ? updated : r
       ));
+      toast.success(`Check-in realizado para ${registration.name}!`);
     } catch (error) {
       console.error('Erro ao fazer check-in:', error);
-      alert('Erro ao fazer check-in. Tente novamente.');
+      toast.error('Erro ao fazer check-in. Tente novamente.');
     }
   };
 
@@ -66,9 +68,10 @@ const Admin: React.FC = () => {
       ));
       setIsEditModalOpen(false);
       setSelectedRegistration(null);
+      toast.success('Inscrição atualizada com sucesso!');
     } catch (error) {
       console.error('Erro ao atualizar inscrição:', error);
-      alert('Erro ao atualizar inscrição. Tente novamente.');
+      toast.error('Erro ao atualizar inscrição. Tente novamente.');
     }
   };
 

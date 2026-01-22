@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import type { Registration } from '../types';
 import { api } from '../services/apiSelector';
+import { ArrowLeft, Search, Edit2, Save, X, CheckCircle, Circle, Trash2, User, LogOut } from 'lucide-react';
 import Loading from '../components/Loading';
-import './Admin.css';
 
 const Admin: React.FC = () => {
   const navigate = useNavigate();
@@ -31,7 +31,6 @@ const Admin: React.FC = () => {
       setRegistrations(data);
     } catch (error) {
       console.error('Erro ao carregar inscrições:', error);
-      // Se houver erro de autenticação, redirecionar para login
       if ((error as any)?.response?.status === 401) {
         navigate('/login');
       }
@@ -100,169 +99,233 @@ const Admin: React.FC = () => {
   }
 
   return (
-    <div className="admin">
-      <div className="admin-container">
-        <div className="admin-header">
-          <h1>Painel Administrativo</h1>
-          <p>Gerencie as inscrições do evento</p>
+    <div className="min-h-screen py-12 px-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex justify-between items-start mb-6">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 text-[#B8860B] hover:text-[#D4AF37] transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Voltar</span>
+            </button>
+            
+            <button
+              onClick={() => navigate('/login')}
+              className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-[#E8DCC4] rounded-lg text-gray-700 hover:bg-white/80 hover:border-[#D4AF37] transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sair</span>
+            </button>
+          </div>
+
+          <h1 className="text-4xl mb-2 text-gray-800">Painel de Administração</h1>
+          <p className="text-gray-600">Gerencie as inscrições do evento</p>
         </div>
 
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon">👥</div>
-            <div className="stat-info">
-              <h3>{stats.total}</h3>
-              <p>Total de Inscrições</p>
+        {/* Stats */}
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-[#E8DCC4] shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 mb-1">Total de Inscritos</p>
+                <p className="text-3xl text-gray-800">{stats.total}</p>
+              </div>
+              <User className="w-10 h-10 text-[#B8860B]" />
             </div>
           </div>
-          <div className="stat-card approved">
-            <div className="stat-icon">✓</div>
-            <div className="stat-info">
-              <h3>{stats.approved}</h3>
-              <p>Pagamentos Aprovados</p>
-            </div>
-          </div>
-          <div className="stat-card pending">
-            <div className="stat-icon">⏱</div>
-            <div className="stat-info">
-              <h3>{stats.pending}</h3>
-              <p>Pagamentos Pendentes</p>
-            </div>
-          </div>
-          <div className="stat-card checked">
-            <div className="stat-icon">📋</div>
-            <div className="stat-info">
-              <h3>{stats.checkedIn}</h3>
-              <p>Check-ins Realizados</p>
-            </div>
-          </div>
-        </div>
 
-        <div className="filters">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Buscar por nome, email ou CPF..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-[#E8DCC4] shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 mb-1">Pagamentos Aprovados</p>
+                <p className="text-3xl text-green-600">{stats.approved}</p>
+              </div>
+              <CheckCircle className="w-10 h-10 text-green-600" />
+            </div>
           </div>
-          <div className="filter-buttons">
-            <button
-              className={filterStatus === 'all' ? 'active' : ''}
-              onClick={() => setFilterStatus('all')}
-            >
-              Todos
-            </button>
-            <button
-              className={filterStatus === 'approved' ? 'active' : ''}
-              onClick={() => setFilterStatus('approved')}
-            >
-              Aprovados
-            </button>
-            <button
-              className={filterStatus === 'pending' ? 'active' : ''}
-              onClick={() => setFilterStatus('pending')}
-            >
-              Pendentes
-            </button>
-            <button
-              className={filterStatus === 'checked_in' ? 'active' : ''}
-              onClick={() => setFilterStatus('checked_in')}
-            >
-              Com Check-in
-            </button>
-            <button
-              className={filterStatus === 'not_checked_in' ? 'active' : ''}
-              onClick={() => setFilterStatus('not_checked_in')}
-            >
-              Sem Check-in
-            </button>
+
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-[#E8DCC4] shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 mb-1">Pagamentos Pendentes</p>
+                <p className="text-3xl text-orange-600">{stats.pending}</p>
+              </div>
+              <Circle className="w-10 h-10 text-orange-600" />
+            </div>
+          </div>
+
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-[#E8DCC4] shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 mb-1">Check-ins Realizados</p>
+                <p className="text-3xl text-green-600">{stats.checkedIn}</p>
+              </div>
+              <CheckCircle className="w-10 h-10 text-green-600" />
+            </div>
           </div>
         </div>
 
-        <div className="registrations-table">
-          {filteredRegistrations.length === 0 ? (
-            <div className="empty-state">
-              <p>Nenhuma inscrição encontrada</p>
+        {/* Search and Filters */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-[#E8DCC4] shadow-lg mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por nome, e-mail ou CPF..."
+                className="w-full pl-12 pr-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+              />
             </div>
-          ) : (
-            <table>
-              <thead>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  filterStatus === 'all' 
+                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white' 
+                    : 'bg-white border border-[#E8DCC4] text-gray-700 hover:border-[#D4AF37]'
+                }`}
+                onClick={() => setFilterStatus('all')}
+              >
+                Todos
+              </button>
+              <button
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  filterStatus === 'approved' 
+                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white' 
+                    : 'bg-white border border-[#E8DCC4] text-gray-700 hover:border-[#D4AF37]'
+                }`}
+                onClick={() => setFilterStatus('approved')}
+              >
+                Aprovados
+              </button>
+              <button
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  filterStatus === 'pending' 
+                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white' 
+                    : 'bg-white border border-[#E8DCC4] text-gray-700 hover:border-[#D4AF37]'
+                }`}
+                onClick={() => setFilterStatus('pending')}
+              >
+                Pendentes
+              </button>
+              <button
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  filterStatus === 'checked_in' 
+                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white' 
+                    : 'bg-white border border-[#E8DCC4] text-gray-700 hover:border-[#D4AF37]'
+                }`}
+                onClick={() => setFilterStatus('checked_in')}
+              >
+                Com Check-in
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Registrations Table */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-[#E8DCC4] shadow-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-[#F5F5DC]">
                 <tr>
-                  <th>Nome</th>
-                  <th>Email</th>
-                  <th>Telefone</th>
-                  <th>CPF</th>
-                  <th>Status Pagamento</th>
-                  <th>Check-in</th>
-                  <th>Ações</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Status</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Nome</th>
+                  <th className="px-6 py-4 text-left text-gray-700">E-mail</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Telefone</th>
+                  <th className="px-6 py-4 text-left text-gray-700">CPF</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Pagamento</th>
+                  <th className="px-6 py-4 text-left text-gray-700">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredRegistrations.map(reg => (
-                  <tr key={reg.id}>
-                    <td>{reg.name}</td>
-                    <td>{reg.email}</td>
-                    <td>{reg.phone}</td>
-                    <td>{reg.cpf}</td>
-                    <td>
-                      <span className={`status-badge ${reg.payment_status}`}>
-                        {reg.payment_status === 'approved' && '✓ Aprovado'}
-                        {reg.payment_status === 'pending' && '⏱ Pendente'}
-                        {reg.payment_status === 'rejected' && '✗ Rejeitado'}
-                      </span>
-                    </td>
-                    <td>
-                      {reg.checked_in ? (
-                        <span className="checked-badge">✓ Realizado</span>
-                      ) : (
-                        <span className="not-checked-badge">Pendente</span>
-                      )}
-                    </td>
-                    <td>
-                      <div className="action-buttons">
-                        <button
-                          className="btn-edit"
-                          onClick={() => handleEdit(reg)}
-                          title="Editar"
-                        >
-                          ✎
-                        </button>
-                        {!reg.checked_in && (
-                          <button
-                            className="btn-checkin"
-                            onClick={() => handleCheckIn(reg)}
-                            title="Fazer Check-in"
-                          >
-                            ✓
-                          </button>
-                        )}
-                      </div>
+                {filteredRegistrations.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                      Nenhuma inscrição encontrada
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredRegistrations.map((registration) => (
+                    <tr key={registration.id} className="border-t border-[#E8DCC4] hover:bg-[#F5F5DC]/30">
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => handleCheckIn(registration)}
+                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                            registration.checked_in
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-orange-100 text-orange-700'
+                          }`}
+                        >
+                          {registration.checked_in ? (
+                            <>
+                              <CheckCircle className="w-4 h-4" />
+                              <span>Check-in</span>
+                            </>
+                          ) : (
+                            <>
+                              <Circle className="w-4 h-4" />
+                              <span>Pendente</span>
+                            </>
+                          )}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 text-gray-800">{registration.name}</td>
+                      <td className="px-6 py-4 text-gray-600">{registration.email}</td>
+                      <td className="px-6 py-4 text-gray-600">{registration.phone}</td>
+                      <td className="px-6 py-4 text-gray-600">{registration.cpf}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-sm ${
+                          registration.payment_status === 'approved' 
+                            ? 'bg-green-100 text-green-700' 
+                            : registration.payment_status === 'pending'
+                            ? 'bg-orange-100 text-orange-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}>
+                          {registration.payment_status === 'approved' && '✓ Aprovado'}
+                          {registration.payment_status === 'pending' && '⏱ Pendente'}
+                          {registration.payment_status === 'rejected' && '✗ Rejeitado'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(registration)}
+                            className="p-2 bg-[#F5F5DC] text-[#B8860B] rounded-lg hover:bg-[#E8DCC4] transition-colors"
+                            title="Editar"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
-          )}
+          </div>
         </div>
       </div>
 
+      {/* Edit Modal */}
       {isEditModalOpen && selectedRegistration && (
-        <div className="modal-overlay" onClick={() => setIsEditModalOpen(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Editar Inscrição</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setIsEditModalOpen(false)}>
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl text-gray-800">Editar Inscrição</h2>
               <button
-                className="modal-close"
                 onClick={() => setIsEditModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
               >
-                ×
+                <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Nome</label>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-700 mb-2">Nome</label>
                 <input
                   type="text"
                   value={selectedRegistration.name}
@@ -272,10 +335,11 @@ const Admin: React.FC = () => {
                       name: e.target.value,
                     })
                   }
+                  className="w-full px-4 py-2 border border-[#E8DCC4] rounded-lg focus:outline-none focus:border-[#D4AF37]"
                 />
               </div>
-              <div className="form-group">
-                <label>Email</label>
+              <div>
+                <label className="block text-gray-700 mb-2">Email</label>
                 <input
                   type="email"
                   value={selectedRegistration.email}
@@ -285,10 +349,11 @@ const Admin: React.FC = () => {
                       email: e.target.value,
                     })
                   }
+                  className="w-full px-4 py-2 border border-[#E8DCC4] rounded-lg focus:outline-none focus:border-[#D4AF37]"
                 />
               </div>
-              <div className="form-group">
-                <label>Telefone</label>
+              <div>
+                <label className="block text-gray-700 mb-2">Telefone</label>
                 <input
                   type="tel"
                   value={selectedRegistration.phone}
@@ -298,10 +363,11 @@ const Admin: React.FC = () => {
                       phone: e.target.value,
                     })
                   }
+                  className="w-full px-4 py-2 border border-[#E8DCC4] rounded-lg focus:outline-none focus:border-[#D4AF37]"
                 />
               </div>
-              <div className="form-group">
-                <label>Status do Pagamento</label>
+              <div>
+                <label className="block text-gray-700 mb-2">Status do Pagamento</label>
                 <select
                   value={selectedRegistration.payment_status}
                   onChange={(e) =>
@@ -310,6 +376,7 @@ const Admin: React.FC = () => {
                       payment_status: e.target.value as any,
                     })
                   }
+                  className="w-full px-4 py-2 border border-[#E8DCC4] rounded-lg focus:outline-none focus:border-[#D4AF37]"
                 >
                   <option value="pending">Pendente</option>
                   <option value="approved">Aprovado</option>
@@ -317,14 +384,17 @@ const Admin: React.FC = () => {
                 </select>
               </div>
             </div>
-            <div className="modal-footer">
+            <div className="flex gap-4 mt-6">
               <button
-                className="btn-secondary"
                 onClick={() => setIsEditModalOpen(false)}
+                className="flex-1 border border-[#E8DCC4] text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancelar
               </button>
-              <button className="btn-primary" onClick={handleSaveEdit}>
+              <button 
+                onClick={handleSaveEdit}
+                className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white py-2 rounded-lg hover:shadow-lg transition-all"
+              >
                 Salvar
               </button>
             </div>

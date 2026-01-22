@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import './Login.css';
+import { ArrowLeft, Lock, Mail, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,73 +33,110 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="login">
-      <div className="login-container">
-        <div className="login-card">
-          <div className="login-header">
-            <div className="login-icon">✝</div>
-            <h1>Administração</h1>
-            <p>Acesse o painel administrativo</p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-[#FAFAFA] via-[#F5F5DC] to-[#E8DCC4]">
+      <div className="max-w-md w-full">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-[#B8860B] hover:text-[#D4AF37] transition-colors mb-8"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>Voltar</span>
+        </button>
+
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-[#E8DCC4] shadow-lg">
+          {/* Logo/Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#D4AF37] to-[#B8860B] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl mb-2 text-gray-800">Acesso Administrativo</h1>
+            <p className="text-gray-600">Entre com suas credenciais para continuar</p>
           </div>
 
-          <form className="login-form" onSubmit={handleSubmit}>
-            {error && <div className="error-message">{error}</div>}
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
 
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-gray-700 mb-2">
+                <Mail className="w-4 h-4 inline mr-2" />
+                E-mail
+              </label>
               <input
                 type="email"
-                id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
                 required
-                autoComplete="email"
+                className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50 transition-colors"
+                placeholder="seu@email.com"
+                disabled={loading}
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="password">Senha</label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Digite sua senha"
-                required
-                autoComplete="current-password"
-              />
+            <div>
+              <label className="block text-gray-700 mb-2">
+                <Lock className="w-4 h-4 inline mr-2" />
+                Senha
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50 transition-colors pr-12"
+                  placeholder="••••••••"
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#B8860B] transition-colors"
+                  disabled={loading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <button
               type="submit"
-              className="login-button"
               disabled={loading}
+              className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white py-3 rounded-full hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? 'Entrando...' : 'Entrar'}
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Entrando...</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="w-5 h-5" />
+                  <span>Entrar</span>
+                </>
+              )}
             </button>
-
-            <div className="login-footer">
-              <a href="#" className="forgot-password">Esqueceu sua senha?</a>
-            </div>
           </form>
 
-          <div className="back-home">
-            <button onClick={() => navigate('/')} className="back-button">
-              ← Voltar para página inicial
-            </button>
+          {/* Info about restricted area */}
+          <div className="mt-6 p-4 bg-[#F5F5DC] rounded-lg border border-[#E8DCC4]">
+            <p className="text-sm text-gray-700 mb-2">
+              <strong>Área Restrita</strong>
+            </p>
+            <p className="text-sm text-gray-600">
+              Esta área é exclusiva para administradores da igreja.
+            </p>
           </div>
-        </div>
-
-        <div className="login-info">
-          <h2>Área Restrita</h2>
-          <p>Esta área é exclusiva para administradores da igreja.</p>
-          <ul>
-            <li>✓ Gerenciar inscrições</li>
-            <li>✓ Realizar check-in</li>
-            <li>✓ Visualizar relatórios</li>
-            <li>✓ Editar informações dos eventos</li>
-          </ul>
         </div>
       </div>
     </div>

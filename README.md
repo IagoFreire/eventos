@@ -4,10 +4,21 @@ Sistema completo de gerenciamento de inscrições para eventos da igreja, com in
 
 ## 🎨 Design
 
-O sistema utiliza uma paleta de cores inspirada em:
+✨ **NOVO!** Sistema atualizado com visual moderno baseado no modelo Figma!
+
+O sistema utiliza uma paleta de cores elegante e moderna:
+- **Dourado Principal** (#D4AF37)
+- **Dourado Escuro** (#B8860B)
+- **Bege Claro** (#F5F5DC)
+- **Bege Escuro** (#E8DCC4)
 - **Branco** (#FFFFFF)
-- **Bege** (#F5F5DC)
-- **Dourado** (#D4AF37)
+
+### Características Visuais:
+- 🎨 Design glassmorphism com backdrop blur
+- ✨ Gradientes suaves e animações fluidas
+- 🎯 Ícones modernos do Lucide React
+- 📱 Totalmente responsivo (mobile, tablet, desktop)
+- 🌟 Interface limpa e profissional
 
 ## 📋 Funcionalidades
 
@@ -54,11 +65,26 @@ O sistema utiliza uma paleta de cores inspirada em:
 - **Context API** - Gerenciamento de estado
 - **Axios** - Requisições HTTP
 - **Supabase Client** - Integração com banco de dados
+- **Tailwind CSS** - Framework CSS moderno e responsivo
+- **Lucide React** - Biblioteca de ícones moderna
+- **Class Variance Authority** - Gerenciamento de variantes de componentes
 
 ### Integrações
 - **Supabase** - Banco de dados Postgres
 - **Mercado Pago** - Processamento de pagamentos
 - **Backend Node.js** (preparado pelo usuário)
+
+## ✨ Atualização Visual (Janeiro 2026)
+
+O sistema foi completamente redesenhado com base no modelo Figma, trazendo:
+
+- 🎨 **Design Moderno**: Interface glassmorphism com gradientes elegantes
+- 📱 **Responsivo**: Otimizado para mobile, tablet e desktop
+- ⚡ **Performance**: Tailwind CSS com tree-shaking automático
+- 🎯 **UX Aprimorada**: Animações suaves e feedback visual claro
+- 🔄 **100% Compatível**: Todas as funcionalidades foram preservadas
+
+Para mais detalhes sobre a atualização, consulte [ATUALIZACAO_VISUAL.md](./ATUALIZACAO_VISUAL.md)
 
 ## 📦 Instalação
 

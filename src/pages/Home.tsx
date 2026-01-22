@@ -1,16 +1,14 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEvent } from '../contexts/EventContext';
+import { MapPin, Calendar, Clock, DollarSign, Users, ChevronRight } from 'lucide-react';
 import Loading from '../components/Loading';
-import './Home.css';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { currentEvent, loadEvent, loading } = useEvent();
   
-  // Para fins de demonstração, vamos usar um evento fixo
-  // Em produção, você pode carregar de uma lista ou usar um ID específico
-  const eventId = '1'; // ID do evento a ser carregado
+  const eventId = '1';
 
   useEffect(() => {
     loadEvent(eventId);
@@ -20,7 +18,6 @@ const Home: React.FC = () => {
     return <Loading />;
   }
 
-  // Dados de exemplo caso não haja evento carregado
   const event = currentEvent || {
     id: '1',
     title: 'Retiro Espiritual 2026',
@@ -38,8 +35,6 @@ const Home: React.FC = () => {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
@@ -51,93 +46,160 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="home">
-      <section className="hero">
-        <div className="hero-overlay"></div>
-        <div 
-          className="hero-image"
-          style={{ backgroundImage: `url(${event.image_url})` }}
-        ></div>
-        <div className="hero-content">
-          <h1 className="hero-title">{event.title}</h1>
-          <p className="hero-subtitle">Uma experiência transformadora de fé e comunhão</p>
-          <button 
-            className="cta-button"
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative py-20 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-block mb-6 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-[#D4AF37]">
+            <span className="text-[#B8860B]">Evento Especial 2026</span>
+          </div>
+          <h1 className="text-5xl md:text-6xl mb-6 text-gray-800 font-bold">
+            {event.title}
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            {event.description}
+          </p>
+          <button
             onClick={() => navigate('/inscricao')}
+            className="group inline-flex items-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white px-8 py-4 rounded-full hover:shadow-lg hover:scale-105 transition-all"
           >
-            Faça sua inscrição
+            <span className="text-lg">Fazer Inscrição</span>
+            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       </section>
 
-      <section className="event-details">
-        <div className="container">
-          <div className="details-grid">
-            <div className="detail-card">
-              <div className="detail-icon">📅</div>
-              <h3>Data do Evento</h3>
-              <p>{formatDate(event.date)}</p>
-            </div>
-
-            <div className="detail-card">
-              <div className="detail-icon">📍</div>
-              <h3>Local</h3>
-              <p>{event.location}</p>
-            </div>
-
-            <div className="detail-card">
-              <div className="detail-icon">💰</div>
-              <h3>Investimento</h3>
-              <p className="price">{formatPrice(event.price)}</p>
-              <small>Inclui hospedagem e alimentação</small>
-            </div>
-          </div>
-
-          <div className="description-section">
-            <h2>Sobre o Evento</h2>
-            <p className="description">{event.description}</p>
-          </div>
-
-          <div className="features">
-            <h2>O que está incluído</h2>
-            <div className="features-grid">
-              <div className="feature-item">
-                <span className="feature-icon">🛏️</span>
-                <span>Hospedagem Completa</span>
+      {/* Event Details */}
+      <section className="py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Date & Time Card */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-[#E8DCC4] shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#D4AF37] to-[#B8860B] rounded-xl flex items-center justify-center mb-4">
+                <Calendar className="w-6 h-6 text-white" />
               </div>
-              <div className="feature-item">
-                <span className="feature-icon">🍽️</span>
-                <span>Alimentação Incluída</span>
-              </div>
-              <div className="feature-item">
-                <span className="feature-icon">🎵</span>
-                <span>Momentos de Louvor</span>
-              </div>
-              <div className="feature-item">
-                <span className="feature-icon">📖</span>
-                <span>Estudos Bíblicos</span>
-              </div>
-              <div className="feature-item">
-                <span className="feature-icon">🙏</span>
-                <span>Tempo de Oração</span>
-              </div>
-              <div className="feature-item">
-                <span className="feature-icon">👥</span>
-                <span>Comunhão Fraterna</span>
+              <h3 className="text-2xl mb-4 text-gray-800">Data e Horário</h3>
+              <div className="space-y-3 text-gray-600">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-[#B8860B]" />
+                  <span>{formatDate(event.date)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-[#B8860B]" />
+                  <span>09h00 - Início das atividades</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="cta-section">
-            <h2>Garanta sua vaga!</h2>
-            <p>Vagas limitadas. Não perca essa oportunidade de renovar sua fé.</p>
-            <button 
-              className="cta-button large"
-              onClick={() => navigate('/inscricao')}
-            >
-              Inscrever-se agora
-            </button>
+            {/* Location Card */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-[#E8DCC4] shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#D4AF37] to-[#B8860B] rounded-xl flex items-center justify-center mb-4">
+                <MapPin className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-2xl mb-4 text-gray-800">Localização</h3>
+              <div className="space-y-3 text-gray-600">
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-5 h-5 text-[#B8860B] mt-1 flex-shrink-0" />
+                  <div>
+                    <p>{event.location}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Investment Card */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-[#E8DCC4] shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#D4AF37] to-[#B8860B] rounded-xl flex items-center justify-center mb-4">
+                <DollarSign className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-2xl mb-4 text-gray-800">Investimento</h3>
+              <div className="space-y-3">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl text-[#B8860B]">{formatPrice(event.price)}</span>
+                  <span className="text-gray-500">/pessoa</span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Inclui: Hospedagem, alimentação completa e material de apoio
+                </p>
+              </div>
+            </div>
+
+            {/* Capacity Card */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-[#E8DCC4] shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#D4AF37] to-[#B8860B] rounded-xl flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-2xl mb-4 text-gray-800">Vagas Limitadas</h3>
+              <div className="space-y-3">
+                <p className="text-gray-600">Apenas {event.max_participants} vagas disponíveis</p>
+                <div className="bg-[#F5F5DC] rounded-full h-3 overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] transition-all"
+                    style={{ width: '45%' }}
+                  />
+                </div>
+                <p className="text-sm text-[#B8860B]">45% das vagas preenchidas</p>
+              </div>
+            </div>
           </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 px-4 bg-white/40 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl text-center mb-12 text-gray-800">O que está incluído</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
+              <span className="text-4xl mb-3 block">🛏️</span>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Hospedagem Completa</h3>
+              <p className="text-gray-600 text-sm">Acomodações confortáveis</p>
+            </div>
+            <div className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
+              <span className="text-4xl mb-3 block">🍽️</span>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Alimentação Incluída</h3>
+              <p className="text-gray-600 text-sm">Todas as refeições</p>
+            </div>
+            <div className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
+              <span className="text-4xl mb-3 block">🎵</span>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Momentos de Louvor</h3>
+              <p className="text-gray-600 text-sm">Adoração e música</p>
+            </div>
+            <div className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
+              <span className="text-4xl mb-3 block">📖</span>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Estudos Bíblicos</h3>
+              <p className="text-gray-600 text-sm">Aprofundamento espiritual</p>
+            </div>
+            <div className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
+              <span className="text-4xl mb-3 block">🙏</span>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Tempo de Oração</h3>
+              <p className="text-gray-600 text-sm">Momentos de intercessão</p>
+            </div>
+            <div className="bg-white/80 rounded-xl p-6 border border-[#E8DCC4] text-center">
+              <span className="text-4xl mb-3 block">👥</span>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Comunhão Fraterna</h3>
+              <p className="text-gray-600 text-sm">Conexão com irmãos</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-4xl mb-6 text-gray-800">
+            Não Perca Esta Oportunidade
+          </h2>
+          <p className="text-xl text-gray-600 mb-8">
+            Garanta sua vaga agora e prepare seu coração para dias de transformação
+          </p>
+          <button
+            onClick={() => navigate('/inscricao')}
+            className="group inline-flex items-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white px-8 py-4 rounded-full hover:shadow-lg hover:scale-105 transition-all"
+          >
+            <span className="text-lg">Fazer Inscrição Agora</span>
+            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </button>
         </div>
       </section>
     </div>

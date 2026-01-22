@@ -1,5 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  /* Colors */
+  --color-gold: #D4AF37;
+  --color-gold-dark: #B8860B;
+  --color-beige: #F5F5DC;
+  --color-beige-dark: #E8DCC4;
+  
+  /* Legacy colors for compatibility */
   --color-primary: #d4af37;
   --color-primary-light: #f4d03f;
   --color-secondary: #f5f5dc;
@@ -24,48 +33,45 @@
   --transition-slow: 0.5s ease;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: var(--color-white);
-  color: var(--color-text);
-  line-height: 1.6;
-}
+  body {
+    @apply min-h-screen;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: linear-gradient(to bottom right, #FAFAFA, #F5F5DC, #E8DCC4);
+    color: var(--color-text);
+    line-height: 1.6;
+  }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.2;
+    font-weight: 600;
+  }
 
-h1, h2, h3, h4, h5, h6 {
-  line-height: 1.2;
-  font-weight: 600;
-}
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  button {
+    font-family: inherit;
+  }
 
-button {
-  font-family: inherit;
-}
+  input, textarea, select {
+    font-family: inherit;
+  }
 
-input, textarea, select {
-  font-family: inherit;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
+  img {
+    max-width: 100%;
+    height: auto;
+  }
 }

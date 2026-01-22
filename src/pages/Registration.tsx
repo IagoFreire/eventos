@@ -7,7 +7,7 @@ import './Registration.css';
 
 const Registration: React.FC = () => {
   const navigate = useNavigate();
-  const { formData, setFormData, currentStep, setCurrentStep, setRegistrationId } = useRegistration();
+  const { formData, setFormData, currentStep, setCurrentStep, registrationId, setRegistrationId } = useRegistration();
   const { currentEvent } = useEvent();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -76,6 +76,11 @@ const Registration: React.FC = () => {
   };
 
   const handlePayment = async () => {
+    if (!registrationId) {
+      setError('Erro: ID de inscrição não encontrado. Por favor, reinicie o processo.');
+      return;
+    }
+
     setLoading(true);
     try {
       // Aqui você integraria com o Mercado Pago
@@ -94,10 +99,10 @@ const Registration: React.FC = () => {
       };
 
       const payment = await api.createPayment(paymentData);
+      console.log('Pagamento criado:', payment);
       
-      // Redirecionar para confirmação ou mostrar QR Code do PIX
-      alert('Pagamento criado com sucesso! ID: ' + payment.id);
-      navigate('/');
+      // Redirecionar para página de confirmação
+      navigate(`/confirmacao?id=${registrationId}`);
     } catch (err) {
       setError('Erro ao processar pagamento. Tente novamente.');
       console.error(err);

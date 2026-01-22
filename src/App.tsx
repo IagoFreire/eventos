@@ -7,6 +7,7 @@ import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Registration from './pages/Registration';
+import Confirmation from './pages/Confirmation';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
 import './App.css';
@@ -23,6 +24,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/inscricao" element={<Registration />} />
+                  <Route path="/confirmacao" element={<Confirmation />} />
                   <Route path="/login" element={<Login />} />
                   <Route 
                     path="/admin" 

@@ -190,6 +190,7 @@ CREATE TABLE users (
 
 - `/` - Página inicial do evento
 - `/inscricao` - Formulário de inscrição (2 etapas)
+- `/confirmacao` - Página de confirmação com ingresso
 - `/login` - Login administrativo
 - `/admin` - Painel de administração (protegido)
 
@@ -283,6 +284,7 @@ Toda a documentação está organizada na pasta [`docs/`](docs/):
 - 🔌 [`OFFLINE_MODE.md`](docs/OFFLINE_MODE.md) - Modo offline com mocks
 - 💳 [`MERCADOPAGO_INTEGRATION.md`](docs/MERCADOPAGO_INTEGRATION.md) - Integração de pagamentos
 - ⌨️ [`COMANDOS.md`](docs/COMANDOS.md) - Referência rápida de comandos
+- 🎫 [`INGRESSO.md`](docs/INGRESSO.md) - Página de confirmação com ingresso
 - 📋 [`PROJECT_SUMMARY.md`](docs/PROJECT_SUMMARY.md) - Resumo do projeto
 - ✅ [`STATUS.md`](docs/STATUS.md) - Status e checklist do projeto
 

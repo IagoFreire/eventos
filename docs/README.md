@@ -89,6 +89,16 @@ Referência rápida de comandos
 - Troubleshooting
 - Comandos úteis
 
+### 🎫 [INGRESSO.md](INGRESSO.md)
+Página de confirmação com ingresso
+
+- Funcionalidade de ingresso
+- Design e layout
+- QR Code
+- Impressão
+- Ações disponíveis
+- Melhorias futuras
+
 ## 🗂️ Estrutura de Documentação
 
 ```
@@ -101,7 +111,8 @@ docs/
 ├── PROJECT_SUMMARY.md               # 📋 Resumo do projeto
 ├── STATUS.md                        # ✅ Status atual
 ├── MERCADOPAGO_INTEGRATION.md       # 💳 Pagamentos
-└── COMANDOS.md                      # ⌨️  Comandos
+├── COMANDOS.md                      # ⌨️  Comandos
+└── INGRESSO.md                      # 🎫 Página de confirmação
 ```
 
 ## 🎯 Por Onde Começar?

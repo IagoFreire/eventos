@@ -1,11 +1,10 @@
 import React from 'react';
-import './Loading.css';
 
 const Loading: React.FC = () => {
   return (
-    <div className="loading-container">
-      <div className="loading-spinner"></div>
-      <p>Carregando...</p>
+    <div className="flex flex-col items-center justify-center min-h-[300px] gap-4">
+      <div className="w-12 h-12 border-4 border-[#F5F5DC] border-t-[#D4AF37] rounded-full animate-spin"></div>
+      <p className="text-[#D4AF37] font-medium">Carregando...</p>
     </div>
   );
 };

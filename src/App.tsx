@@ -10,7 +10,6 @@ import Registration from './pages/Registration';
 import Confirmation from './pages/Confirmation';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
-import './App.css';
 
 function AppContent() {
   const location = useLocation();

@@ -11,7 +11,6 @@ const Registration: React.FC = () => {
   const { currentEvent } = useEvent();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const event = currentEvent || {
     id: '1',
@@ -27,20 +26,14 @@ const Registration: React.FC = () => {
   };
 
   const validateStep1 = () => {
-    if (!formData.name || !formData.email || !formData.phone || !formData.cpf || !formData.address) {
-      setError('Por favor, preencha todos os campos');
+    if (!formData.name || !formData.email || !formData.phone || !formData.cpf) {
+      setError('Por favor, preencha todos os campos obrigatórios');
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setError('Por favor, insira um email válido');
-      return false;
-    }
-
-    const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
-    if (!cpfRegex.test(formData.cpf)) {
-      setError('CPF deve estar no formato: 000.000.000-00');
       return false;
     }
 
@@ -97,7 +90,8 @@ const Registration: React.FC = () => {
       const payment = await api.createPayment(paymentData);
       console.log('Pagamento criado:', payment);
       
-      setIsSubmitted(true);
+      // Redireciona para a página de confirmação com o ingresso
+      navigate(`/confirmacao?id=${registrationId}`);
     } catch (err) {
       setError('Erro ao processar pagamento. Tente novamente.');
       console.error(err);
@@ -112,31 +106,6 @@ const Registration: React.FC = () => {
       currency: 'BRL',
     });
   };
-
-  if (isSubmitted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-[#E8DCC4] shadow-lg text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-[#D4AF37] to-[#B8860B] rounded-full flex items-center justify-center mx-auto mb-6">
-              <Check className="w-10 h-10 text-white" />
-            </div>
-            <h2 className="text-3xl mb-4 text-gray-800">Inscrição Confirmada!</h2>
-            <p className="text-gray-600 mb-2">Obrigado por se inscrever, {formData.name}!</p>
-            <p className="text-gray-600 mb-8">
-              Enviamos um e-mail de confirmação para <strong>{formData.email}</strong> com todos os detalhes do evento.
-            </p>
-            <button
-              onClick={() => navigate('/')}
-              className="w-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white py-3 rounded-full hover:shadow-lg transition-all"
-            >
-              Voltar para Página Inicial
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -223,43 +192,41 @@ const Registration: React.FC = () => {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 mb-2">
-                    <Phone className="w-4 h-4 inline mr-2" />
-                    Telefone *
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
-                    placeholder="(00) 00000-0000"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-700 mb-2">CPF *</label>
-                  <input
-                    type="text"
-                    name="cpf"
-                    value={formData.cpf}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
-                    placeholder="000.000.000-00"
-                  />
-                </div>
+              <div>
+                <label className="block text-gray-700 mb-2">
+                  <Phone className="w-4 h-4 inline mr-2" />
+                  Telefone *
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+                  placeholder="(00) 00000-0000"
+                />
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">Endereço Completo *</label>
+                <label className="block text-gray-700 mb-2">CPF *</label>
+                <input
+                  type="text"
+                  name="cpf"
+                  value={formData.cpf}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+                  placeholder="000.000.000-00"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-2">Endereço Completo</label>
                 <textarea
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
-                  placeholder="Rua, número, bairro, cidade, estado"
+                  placeholder="Rua, número, bairro, cidade, estado (opcional)"
                   rows={3}
                 />
               </div>

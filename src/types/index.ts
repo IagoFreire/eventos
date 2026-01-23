@@ -59,6 +59,7 @@ export interface User {
 }
 
 export interface PaymentData {
+  registration_id?: string;
   transaction_amount: number;
   description: string;
   payment_method_id: string;
@@ -69,4 +70,7 @@ export interface PaymentData {
       number: string;
     };
   };
+  token?: string; // Token do cartão (para pagamentos com cartão)
+  installments?: number; // Número de parcelas
+  issuer_id?: string; // ID do banco emissor (opcional)
 }

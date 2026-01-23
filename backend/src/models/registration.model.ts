@@ -208,4 +208,13 @@ export class RegistrationModel {
     );
     return result.rows[0] || null;
   }
+
+  // Buscar inscrição por payment_id
+  static async findByPaymentId(paymentId: string): Promise<Registration | null> {
+    const result = await pool.query(
+      'SELECT * FROM registrations WHERE payment_id = $1',
+      [paymentId]
+    );
+    return result.rows[0] || null;
+  }
 }

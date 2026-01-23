@@ -133,6 +133,43 @@
   }
 }
 
+/* Estilos para campos do Mercado Pago */
+#mp-card-number-field,
+#mp-cardholder-name-field,
+#mp-expiration-date-field,
+#mp-security-code-field,
+#mp-identification-type-field,
+#mp-identification-number-field {
+  min-height: 48px;
+}
+
+/* Garantir que os iframes dos campos do Mercado Pago apareçam */
+#mp-card-number-field iframe,
+#mp-cardholder-name-field iframe,
+#mp-expiration-date-field iframe,
+#mp-security-code-field iframe,
+#mp-identification-type-field iframe,
+#mp-identification-number-field iframe {
+  width: 100% !important;
+  min-height: 48px !important;
+  border: 1px solid #E8DCC4 !important;
+  border-radius: 8px !important;
+}
+
+/* Inputs dentro dos campos do Mercado Pago */
+#mp-card-number-field input,
+#mp-cardholder-name-field input,
+#mp-expiration-date-field input,
+#mp-security-code-field input,
+#mp-identification-type-field input,
+#mp-identification-number-field input {
+  width: 100% !important;
+  padding: 12px 16px !important;
+  border-radius: 8px !important;
+  border: 1px solid #E8DCC4 !important;
+  font-size: 16px !important;
+}
+
 /* Estilos para impressão */
 @media print {
   @page {

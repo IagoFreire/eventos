@@ -10,6 +10,10 @@ interface PixPaymentProps {
   amount: number;
   onPaymentConfirmed?: () => void;
   isTestMode?: boolean;
+  registrationId?: string;
+  paymentId?: string;
+  checkPaymentStatus?: (paymentId: string) => Promise<any>;
+  checkRegistrationStatus?: (registrationId: string) => Promise<any>;
 }
 
 const PixPayment: React.FC<PixPaymentProps> = ({
@@ -19,10 +23,16 @@ const PixPayment: React.FC<PixPaymentProps> = ({
   amount,
   onPaymentConfirmed,
   isTestMode = false,
+  registrationId,
+  paymentId,
+  checkPaymentStatus,
+  checkRegistrationStatus,
 }) => {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutos em segundos
+  const [isChecking, setIsChecking] = useState(false);
 
+  // Timer de contagem regressiva
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -36,6 +46,86 @@ const PixPayment: React.FC<PixPaymentProps> = ({
 
     return () => clearInterval(timer);
   }, []);
+
+  // Polling para verificar status do pagamento automaticamente
+  useEffect(() => {
+    // Não fazer polling em modo de teste (usa botão manual)
+    if (isTestMode || !onPaymentConfirmed) {
+      return;
+    }
+
+    // Priorizar verificação da inscrição no banco (atualizada pelo webhook)
+    // Se não tiver função de verificar inscrição, usar verificação do pagamento
+    const shouldCheckRegistration = registrationId && checkRegistrationStatus;
+    const shouldCheckPayment = paymentId && checkPaymentStatus;
+
+    if (!shouldCheckRegistration && !shouldCheckPayment) {
+      return;
+    }
+
+    console.log('🔄 Iniciando verificação automática do status do pagamento...');
+
+    // Verificar a cada 5 segundos
+    const checkInterval = setInterval(async () => {
+      if (isChecking) return; // Evitar múltiplas verificações simultâneas
+      
+      setIsChecking(true);
+      try {
+        let isApproved = false;
+
+        // Primeiro, verificar status da inscrição no banco (mais confiável - atualizado pelo webhook)
+        if (shouldCheckRegistration) {
+          console.log(`🔍 Verificando status da inscrição ${registrationId} no banco...`);
+          const registration = await checkRegistrationStatus(registrationId);
+          
+          if (registration?.payment_status === 'approved') {
+            console.log('✅ Pagamento aprovado detectado no banco de dados!');
+            isApproved = true;
+          } else {
+            console.log(`📊 Status da inscrição: ${registration?.payment_status || 'desconhecido'}`);
+          }
+        }
+
+        // Se não estiver aprovado no banco, verificar status no Mercado Pago
+        if (!isApproved && shouldCheckPayment) {
+          console.log(`🔍 Verificando status do pagamento ${paymentId} no Mercado Pago...`);
+          const paymentStatus = await checkPaymentStatus(paymentId);
+          
+          console.log('📊 Status do pagamento:', paymentStatus);
+          
+          if (paymentStatus?.status === 'approved') {
+            console.log('✅ Pagamento aprovado detectado no Mercado Pago!');
+            isApproved = true;
+          } else if (paymentStatus?.status === 'rejected') {
+            console.log('❌ Pagamento rejeitado');
+            clearInterval(checkInterval);
+            toast.error('❌ Pagamento foi rejeitado. Por favor, tente novamente.');
+            setIsChecking(false);
+            return;
+          }
+        }
+
+        // Se aprovado, confirmar e parar polling
+        if (isApproved) {
+          console.log('✅ Confirmando pagamento automaticamente...');
+          clearInterval(checkInterval);
+          onPaymentConfirmed();
+        }
+        // Se estiver pending ou outro status, continua verificando
+      } catch (error) {
+        console.error('Erro ao verificar status do pagamento:', error);
+        // Não limpar o intervalo em caso de erro, continua tentando
+      } finally {
+        setIsChecking(false);
+      }
+    }, 5000); // Verificar a cada 5 segundos
+
+    // Limpar intervalo quando componente desmontar
+    return () => {
+      console.log('🛑 Parando verificação automática do pagamento');
+      clearInterval(checkInterval);
+    };
+  }, [registrationId, paymentId, checkRegistrationStatus, checkPaymentStatus, onPaymentConfirmed, isTestMode, isChecking]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -160,15 +250,17 @@ const PixPayment: React.FC<PixPaymentProps> = ({
         </ol>
       </div>
 
-      {/* Modo de Teste - Botão para Simular Pagamento */}
-      {isTestMode && (
+      {/* Botão para Simular Pagamento (sempre visível para testes) */}
+      {onPaymentConfirmed && (
         <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6">
           <div className="text-center mb-4">
             <p className="text-yellow-900 font-semibold mb-2">
-              🧪 Modo de Teste Ativo
+              {isTestMode ? '🧪 Modo de Teste Ativo' : '🧪 Teste Manual'}
             </p>
             <p className="text-yellow-700 text-sm">
-              Este QR Code é simulado. Para testar, clique no botão abaixo:
+              {isTestMode 
+                ? 'Este QR Code é simulado. Para testar, clique no botão abaixo:'
+                : 'Para testar manualmente ou se o pagamento já foi aprovado, clique abaixo:'}
             </p>
           </div>
           <button
@@ -176,10 +268,12 @@ const PixPayment: React.FC<PixPaymentProps> = ({
             className="w-full bg-green-600 text-white py-3 rounded-full hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-lg"
           >
             <CheckCircle className="w-5 h-5" />
-            <span className="font-semibold">✅ Simular Pagamento Aprovado</span>
+            <span className="font-semibold">✅ Simular/Confirmar Pagamento</span>
           </button>
           <p className="text-yellow-600 text-xs text-center mt-3">
-            Clique para simular que o pagamento foi aprovado pelo banco
+            {isTestMode 
+              ? 'Clique para simular que o pagamento foi aprovado pelo banco'
+              : 'O sistema também verifica automaticamente a cada 5 segundos'}
           </p>
         </div>
       )}

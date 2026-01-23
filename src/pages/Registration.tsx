@@ -22,6 +22,7 @@ const Registration: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pixData, setPixData] = useState<any>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
   const [showPixPayment, setShowPixPayment] = useState(false);
   const [showCreditCardPayment, setShowCreditCardPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card'>('pix');
@@ -44,7 +45,7 @@ const Registration: React.FC = () => {
       ...formData,
       [e.target.name]: e.target.value,
     };
-    
+
     // Atualiza o endereço completo automaticamente quando campos de endereço mudam
     if (['street', 'number', 'complement', 'neighborhood', 'city', 'state', 'cep'].includes(e.target.name)) {
       const parts: string[] = [];
@@ -57,14 +58,14 @@ const Registration: React.FC = () => {
       if (newFormData.cep) parts.push(`CEP: ${newFormData.cep}`);
       newFormData.address = parts.length > 0 ? parts.join(', ') : '';
     }
-    
+
     setFormData(newFormData);
   };
 
   // Função para buscar inscrição pendente quando o email for digitado
   const handleEmailBlur = async () => {
     const email = formData.email.trim();
-    
+
     // Valida formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
@@ -79,7 +80,7 @@ const Registration: React.FC = () => {
     setLoadingCep(true);
     try {
       const pendingRegistration = await api.getPendingRegistrationByEmail(email, event.id);
-      
+
       if (pendingRegistration) {
         // Preenche os dados da inscrição pendente
         setFormData({
@@ -90,12 +91,12 @@ const Registration: React.FC = () => {
           cpf: pendingRegistration.cpf,
           address: pendingRegistration.address || '',
         });
-        
+
         // Se tiver registration ID, atualiza
         if (pendingRegistration.id) {
           setRegistrationId(pendingRegistration.id);
         }
-        
+
         toast.info('Inscrição pendente encontrada! Dados preenchidos automaticamente.');
       }
     } catch (error: any) {
@@ -109,7 +110,7 @@ const Registration: React.FC = () => {
   // Função para buscar CEP
   const handleCepSearch = async (cep: string, preserveData?: Partial<typeof formData>) => {
     const cleanCep = cep.replace(/\D/g, '');
-    
+
     // Só busca se tiver 8 dígitos
     if (cleanCep.length !== 8) {
       return;
@@ -118,7 +119,7 @@ const Registration: React.FC = () => {
     setLoadingCep(true);
     try {
       const cepData = await searchCep(cleanCep);
-      
+
       if (cepData) {
         setFormData((prev) => {
           const updatedData = {
@@ -131,7 +132,7 @@ const Registration: React.FC = () => {
             state: cepData.uf || '',
             complement: cepData.complemento || '',
           };
-          
+
           // Atualiza o endereço completo
           const parts: string[] = [];
           if (updatedData.street) parts.push(updatedData.street);
@@ -142,7 +143,7 @@ const Registration: React.FC = () => {
           if (updatedData.state) parts.push(updatedData.state);
           if (updatedData.cep) parts.push(`CEP: ${updatedData.cep}`);
           updatedData.address = parts.length > 0 ? parts.join(', ') : '';
-          
+
           return updatedData;
         });
       }
@@ -171,7 +172,7 @@ const Registration: React.FC = () => {
   // Função para combinar campos de endereço em um endereço completo
   const buildFullAddress = (): string => {
     const parts: string[] = [];
-    
+
     if (formData.street) parts.push(formData.street);
     if (formData.number) parts.push(`nº ${formData.number}`);
     if (formData.complement) parts.push(formData.complement);
@@ -179,7 +180,7 @@ const Registration: React.FC = () => {
     if (formData.city) parts.push(formData.city);
     if (formData.state) parts.push(formData.state);
     if (formData.cep) parts.push(`CEP: ${formData.cep}`);
-    
+
     return parts.length > 0 ? parts.join(', ') : formData.address || '';
   };
 
@@ -187,7 +188,7 @@ const Registration: React.FC = () => {
   const handleFillTestData = async () => {
     const testData = generateTestData();
     const randomNumber = Math.floor(1 + Math.random() * 9999);
-    
+
     // Preenche os dados básicos primeiro
     const basicData = {
       name: testData.name,
@@ -197,12 +198,12 @@ const Registration: React.FC = () => {
       cep: testData.cep,
       number: randomNumber.toString(),
     };
-    
+
     setFormData({
       ...formData,
       ...basicData,
     });
-    
+
     // Busca o CEP automaticamente para preencher os campos de endereço
     // Passa os dados básicos para preservá-los durante a busca
     if (testData.cep) {
@@ -236,11 +237,11 @@ const Registration: React.FC = () => {
       if (validateStep1()) {
         setLoading(true);
         setError(''); // Limpar erro anterior
-        
+
         try {
           // Combina os campos de endereço antes de enviar
           const fullAddress = buildFullAddress();
-          
+
           const registration = await api.createRegistration({
             ...formData,
             address: fullAddress || formData.address,
@@ -250,16 +251,16 @@ const Registration: React.FC = () => {
           setCurrentStep(2);
         } catch (err: any) {
           console.error('❌ Erro ao criar inscrição:', err);
-          
+
           // Extrair mensagem de erro do backend
           let errorMessage = 'Erro ao criar inscrição. Tente novamente.';
-          
+
           if (err.response?.data?.error) {
             errorMessage = err.response.data.error;
           } else if (err.message) {
             errorMessage = err.message;
           }
-          
+
           // Traduzir erros comuns
           if (errorMessage.includes('duplicate key') || errorMessage.includes('already exists')) {
             errorMessage = '⚠️ Este CPF ou e-mail já está inscrito neste evento!';
@@ -270,7 +271,7 @@ const Registration: React.FC = () => {
           } else if (errorMessage.includes('cpf')) {
             errorMessage = '📋 CPF inválido. Use o formato: 123.456.789-09';
           }
-          
+
           setError(errorMessage);
           toast.error(errorMessage, {
             autoClose: 5000,
@@ -303,7 +304,7 @@ const Registration: React.FC = () => {
     // Se for PIX, processar normalmente
     setLoading(true);
     setError(''); // Limpar erro anterior
-    
+
     try {
       const paymentData = {
         registration_id: registrationId,
@@ -321,7 +322,12 @@ const Registration: React.FC = () => {
 
       const payment = await api.createPayment(paymentData);
       console.log('✅ Pagamento criado:', payment);
-      
+
+      // Salvar payment_id para verificação automática
+      if (payment.payment_id) {
+        setPaymentId(payment.payment_id);
+      }
+
       // Se tiver dados do PIX (QR Code), mostrar componente de pagamento PIX
       if (payment.pix && payment.pix.qr_code) {
         setPixData(payment.pix);
@@ -333,10 +339,10 @@ const Registration: React.FC = () => {
       }
     } catch (err: any) {
       console.error('❌ Erro ao processar pagamento:', err);
-      
+
       // Extrair mensagem de erro do backend
       let errorMessage = 'Erro ao processar pagamento. Tente novamente.';
-      
+
       if (err.response?.data?.error) {
         // Erro do backend
         errorMessage = err.response.data.error;
@@ -344,7 +350,7 @@ const Registration: React.FC = () => {
         // Erro genérico
         errorMessage = err.message;
       }
-      
+
       // Traduzir erros comuns do Mercado Pago
       if (errorMessage.includes('transaction_amount')) {
         errorMessage = '💰 Valor da transação inválido. Verifique o valor do evento.';
@@ -355,7 +361,7 @@ const Registration: React.FC = () => {
       } else if (errorMessage.includes('payer.email')) {
         errorMessage = '📧 E-mail inválido. Verifique seu e-mail.';
       }
-      
+
       setError(errorMessage);
       toast.error(errorMessage, {
         autoClose: 5000, // 5 segundos para ler a mensagem
@@ -365,6 +371,31 @@ const Registration: React.FC = () => {
     }
   };
 
+  // Callback para pagamento com cartão aprovado
+  // Diferente do PIX, o cartão já retorna o status imediatamente
+  const handleCreditCardPaymentSuccess = async () => {
+    if (!registrationId) {
+      toast.error('ID de inscrição não encontrado.');
+      return;
+    }
+
+    try {
+      // Atualizar status da inscrição para aprovado
+      await api.updateRegistration(registrationId, {
+        payment_status: 'approved'
+      });
+
+      toast.success('✅ Pagamento confirmado com sucesso!');
+      setCurrentStep(3);
+    } catch (error: any) {
+      console.error('❌ Erro ao confirmar pagamento:', error);
+      // Mesmo com erro, avançar (webhook pode ter atualizado)
+      toast.success('✅ Pagamento confirmado com sucesso!');
+      setCurrentStep(3);
+    }
+  };
+
+  // Verificar e confirmar pagamento real (usado pelo polling automático do PIX)
   const handlePixPaymentConfirmed = async () => {
     if (!registrationId) {
       toast.error('ID de inscrição não encontrado.');
@@ -373,18 +404,72 @@ const Registration: React.FC = () => {
 
     setLoading(true);
     try {
-      // Atualizar status para aprovado (simula aprovação do pagamento)
-      await api.updateRegistration(registrationId, {
-        payment_status: 'approved'
-      });
-      
-      setCurrentStep(3);
+      // Buscar a inscrição atual para verificar o status
+      const registration = await api.getRegistrationById(registrationId);
+
+      // Se já estiver aprovado no banco (atualizado pelo webhook), apenas avançar
+      if (registration.payment_status === 'approved') {
+        console.log('✅ Pagamento já está aprovado no banco de dados');
+        toast.success('✅ Pagamento confirmado com sucesso!');
+        setCurrentStep(3);
+        setLoading(false);
+        return;
+      }
+
+      // Se não tiver payment_id, não pode verificar
+      if (!registration.payment_id) {
+        toast.error('Pagamento não encontrado. Por favor, tente novamente.');
+        setLoading(false);
+        return;
+      }
+
+      // Verificar o status real do pagamento no Mercado Pago
+      const paymentStatus = await api.getPaymentStatus(registration.payment_id);
+
+      console.log('📊 Status do pagamento:', paymentStatus);
+
+      // Se o pagamento foi aprovado, atualizar e avançar
+      if (paymentStatus.status === 'approved') {
+        await api.updateRegistration(registrationId, {
+          payment_status: 'approved'
+        });
+
+        toast.success('✅ Pagamento confirmado com sucesso!');
+        setCurrentStep(3);
+      } else if (paymentStatus.status === 'pending') {
+        // Pagamento ainda está pendente
+        toast.warning('⏳ Pagamento ainda não foi confirmado. Aguarde alguns instantes e tente novamente.', {
+          autoClose: 5000,
+        });
+      } else if (paymentStatus.status === 'rejected') {
+        // Pagamento foi rejeitado
+        toast.error('❌ Pagamento foi rejeitado. Por favor, tente novamente com outro método de pagamento.');
+      } else {
+        // Outro status (in_process, etc)
+        toast.info(`ℹ️ Status do pagamento: ${paymentStatus.status}. Aguarde a confirmação.`, {
+          autoClose: 5000,
+        });
+      }
     } catch (error: any) {
-      console.error('❌ Erro ao confirmar pagamento:', error);
-      
-      // Se falhar a atualização, permite prosseguir mesmo assim
-      setCurrentStep(3);
-      toast.warning('Prosseguindo para confirmação...');
+      console.error('❌ Erro ao verificar pagamento:', error);
+
+      // Se não conseguir verificar, oferece opção de confirmar manualmente (para casos de teste)
+      const shouldProceed = window.confirm(
+        'Não foi possível verificar o status do pagamento automaticamente. ' +
+        'Deseja confirmar manualmente? (Use apenas em modo de teste)'
+      );
+
+      if (shouldProceed) {
+        try {
+          await api.updateRegistration(registrationId, {
+            payment_status: 'approved'
+          });
+          toast.warning('⚠️ Pagamento confirmado manualmente (modo de teste)');
+          setCurrentStep(3);
+        } catch (updateError) {
+          toast.error('Erro ao confirmar pagamento. Tente novamente.');
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -445,10 +530,10 @@ const Registration: React.FC = () => {
 
     try {
       setLoading(true);
-      
+
       // Aguarda um pouco para garantir que o QR Code esteja renderizado
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Captura o elemento do ingresso como canvas
       const canvas = await html2canvas(ticketRef.current, {
         scale: 2,
@@ -484,7 +569,7 @@ const Registration: React.FC = () => {
       const sanitizedName = formData.name.split(' ')[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const sanitizedTitle = event.title.replace(/\s+/g, '-').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const fileName = `ingresso-${sanitizedTitle}-${sanitizedName}.pdf`;
-      
+
       // Faz o download
       pdf.save(fileName);
     } catch (error) {
@@ -556,43 +641,38 @@ const Registration: React.FC = () => {
           <h1 className="text-4xl mb-4 text-gray-800">
             {currentStep === 3 ? 'Confirmação de Inscrição' : 'Inscrição para o Evento'}
           </h1>
-          
+
           {/* Progress Steps */}
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep >= 1 ? 'bg-gradient-to-br from-[#D4AF37] to-[#B8860B] text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-gradient-to-br from-[#D4AF37] to-[#B8860B] text-white' : 'bg-gray-300 text-gray-600'
+                }`}>
                 {currentStep > 1 ? <Check className="w-5 h-5" /> : '1'}
               </div>
               <span className={`hidden sm:inline ${currentStep >= 1 ? 'text-gray-800' : 'text-gray-500'}`}>Dados</span>
             </div>
             <div className="flex-1 h-1 bg-gray-300 rounded">
-              <div 
-                className={`h-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] rounded transition-all ${
-                  currentStep >= 2 ? 'w-full' : 'w-0'
-                }`}
+              <div
+                className={`h-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] rounded transition-all ${currentStep >= 2 ? 'w-full' : 'w-0'
+                  }`}
               />
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep >= 2 ? 'bg-gradient-to-br from-[#D4AF37] to-[#B8860B] text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-gradient-to-br from-[#D4AF37] to-[#B8860B] text-white' : 'bg-gray-300 text-gray-600'
+                }`}>
                 {currentStep > 2 ? <Check className="w-5 h-5" /> : '2'}
               </div>
               <span className={`hidden sm:inline ${currentStep >= 2 ? 'text-gray-800' : 'text-gray-500'}`}>Pagamento</span>
             </div>
             <div className="flex-1 h-1 bg-gray-300 rounded">
-              <div 
-                className={`h-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] rounded transition-all ${
-                  currentStep >= 3 ? 'w-full' : 'w-0'
-                }`}
+              <div
+                className={`h-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] rounded transition-all ${currentStep >= 3 ? 'w-full' : 'w-0'
+                  }`}
               />
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep >= 3 ? 'bg-gradient-to-br from-[#D4AF37] to-[#B8860B] text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? 'bg-gradient-to-br from-[#D4AF37] to-[#B8860B] text-white' : 'bg-gray-300 text-gray-600'
+                }`}>
                 {currentStep > 3 ? <Check className="w-5 h-5" /> : '3'}
               </div>
               <span className={`hidden sm:inline ${currentStep >= 3 ? 'text-gray-800' : 'text-gray-500'}`}>Confirmação</span>
@@ -622,7 +702,7 @@ const Registration: React.FC = () => {
                   Preencher Teste
                 </button>
               </div>
-              
+
               <div>
                 <label className="block text-gray-700 mb-2">
                   <Mail className="w-4 h-4 inline mr-2" />
@@ -825,21 +905,20 @@ const Registration: React.FC = () => {
               <h2 className="text-2xl mb-6 text-gray-800">Escolha a forma de pagamento</h2>
 
               <div className="space-y-4">
-                <div 
-                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                    paymentMethod === 'pix' 
-                      ? 'border-[#D4AF37] bg-[#F5F5DC]' 
-                      : 'border-[#E8DCC4] hover:border-[#D4AF37]'
-                  }`}
+                <div
+                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${paymentMethod === 'pix'
+                    ? 'border-[#D4AF37] bg-[#F5F5DC]'
+                    : 'border-[#E8DCC4] hover:border-[#D4AF37]'
+                    }`}
                   onClick={() => setPaymentMethod('pix')}
                 >
                   <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="payment" 
+                    <input
+                      type="radio"
+                      name="payment"
                       checked={paymentMethod === 'pix'}
                       onChange={() => setPaymentMethod('pix')}
-                      className="w-4 h-4" 
+                      className="w-4 h-4"
                     />
                     <span className="text-2xl">📱</span>
                     <div className="flex-1">
@@ -848,22 +927,21 @@ const Registration: React.FC = () => {
                     </div>
                   </label>
                 </div>
-                
-                <div 
-                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                    paymentMethod === 'credit_card' 
-                      ? 'border-[#D4AF37] bg-[#F5F5DC]' 
-                      : 'border-[#E8DCC4] hover:border-[#D4AF37]'
-                  }`}
+
+                <div
+                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${paymentMethod === 'credit_card'
+                    ? 'border-[#D4AF37] bg-[#F5F5DC]'
+                    : 'border-[#E8DCC4] hover:border-[#D4AF37]'
+                    }`}
                   onClick={() => setPaymentMethod('credit_card')}
                 >
                   <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="payment" 
+                    <input
+                      type="radio"
+                      name="payment"
                       checked={paymentMethod === 'credit_card'}
                       onChange={() => setPaymentMethod('credit_card')}
-                      className="w-4 h-4" 
+                      className="w-4 h-4"
                     />
                     <span className="text-2xl">💳</span>
                     <div className="flex-1">
@@ -906,9 +984,31 @@ const Registration: React.FC = () => {
                 ticketUrl={pixData?.ticket_url}
                 amount={event.price}
                 onPaymentConfirmed={handlePixPaymentConfirmed}
-                isTestMode={true} // Sempre em modo teste para facilitar
+                isTestMode={false} // Desabilitar modo teste para permitir polling automático
+                registrationId={registrationId || undefined}
+                paymentId={paymentId || undefined}
+                checkPaymentStatus={async (id: string) => {
+                  // Verificar status do pagamento no Mercado Pago
+                  try {
+                    const status = await api.getPaymentStatus(id);
+                    return status;
+                  } catch (error) {
+                    console.error('Erro ao verificar status:', error);
+                    return null;
+                  }
+                }}
+                checkRegistrationStatus={async (id: string) => {
+                  // Verificar status da inscrição no banco de dados (atualizado pelo webhook)
+                  try {
+                    const registration = await api.getRegistrationById(id);
+                    return registration;
+                  } catch (error) {
+                    console.error('Erro ao verificar inscrição:', error);
+                    return null;
+                  }
+                }}
               />
-              
+
               <div className="flex flex-col-reverse md:flex-row gap-4">
                 <button
                   onClick={() => setShowPixPayment(false)}
@@ -935,8 +1035,10 @@ const Registration: React.FC = () => {
             <CreditCardPayment
               amount={event.price}
               registrationId={registrationId || ''}
-              onPaymentSuccess={handlePixPaymentConfirmed}
+              onPaymentSuccess={handleCreditCardPaymentSuccess}
               onCancel={() => setShowCreditCardPayment(false)}
+              payerEmail={formData.email}
+              payerCpf={formData.cpf}
             />
           )}
 

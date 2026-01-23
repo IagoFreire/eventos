@@ -13,6 +13,8 @@
     "preview:offline": "cross-env VITE_OFFLINE_MODE=true vite preview"
   },
   "dependencies": {
+    "@mercadopago/sdk-js": "^0.0.3",
+    "@mercadopago/sdk-react": "^1.0.7",
     "@radix-ui/react-slot": "^1.2.4",
     "@supabase/supabase-js": "^2.91.0",
     "axios": "^1.13.2",

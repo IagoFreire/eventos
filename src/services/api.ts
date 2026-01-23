@@ -30,6 +30,11 @@ export const getEvents = async (): Promise<Event[]> => {
   return response.data;
 };
 
+export const getEventStats = async (eventId: string): Promise<any> => {
+  const response = await api.get(`/events/${eventId}/stats`);
+  return response.data;
+};
+
 export const updateEvent = async (eventId: string, data: Partial<Event>): Promise<Event> => {
   const response = await api.put(`/events/${eventId}`, data);
   return response.data;

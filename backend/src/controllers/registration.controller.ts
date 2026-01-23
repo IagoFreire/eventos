@@ -100,6 +100,7 @@ export class RegistrationController {
   }
 
   // Fazer check-in
+  // Toggle check-in (marca ou desmarca)
   static async checkIn(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
@@ -116,11 +117,7 @@ export class RegistrationController {
         return;
       }
 
-      if (existing.checked_in) {
-        res.status(400).json({ error: 'Check-in já realizado' });
-        return;
-      }
-
+      // Faz o toggle (marca ou desmarca)
       const registration = await RegistrationModel.checkIn(id);
       res.json(registration);
     } catch (error: any) {

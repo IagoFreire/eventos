@@ -57,6 +57,24 @@ export const mockApi = {
     return events;
   },
 
+  getEventStats: async (eventId: string): Promise<any> => {
+    await mockDelay();
+    const eventRegs = registrations.filter(r => r.event_id === eventId);
+    const approved = eventRegs.filter(r => r.payment_status === 'approved').length;
+    const event = events.find(e => e.id === eventId);
+    const maxParticipants = event?.max_participants || 0;
+    
+    return {
+      event_id: eventId,
+      total_registrations: eventRegs.length,
+      approved_registrations: approved,
+      max_participants: maxParticipants,
+      available_spots: maxParticipants > 0 ? maxParticipants - approved : null,
+      percentage_filled: maxParticipants > 0 ? Math.round((approved / maxParticipants) * 100) : 0,
+      is_full: maxParticipants > 0 && approved >= maxParticipants
+    };
+  },
+
   updateEvent: async (eventId: string, data: Partial<Event>): Promise<Event> => {
     await mockDelay();
     const index = events.findIndex(e => e.id === eventId);
@@ -141,9 +159,12 @@ export const mockApi = {
       throw new Error('Inscrição não encontrada');
     }
     
-    registrations[index].checked_in = true;
+    // Toggle check-in
+    registrations[index].checked_in = !registrations[index].checked_in;
     saveToStorage(STORAGE_KEYS.REGISTRATIONS, registrations);
-    console.log('✅ [MOCK] Check-in realizado:', registrations[index]);
+    
+    const status = registrations[index].checked_in ? '✅ marcado' : '↩️ desmarcado';
+    console.log(`[MOCK] Check-in ${status}:`, registrations[index]);
     
     return registrations[index];
   },
@@ -208,7 +229,7 @@ export const mockApi = {
     const token = localStorage.getItem('token');
     if (token === mockToken) {
       console.log('✅ [MOCK] Token válido');
-      return mockAdmin;
+      return { user: mockAdmin }; // Retornar no mesmo formato do backend
     }
     
     console.log('❌ [MOCK] Token inválido');

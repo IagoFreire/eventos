@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { EventModel } from '../models/event.model.js';
+import { RegistrationModel } from '../models/registration.model.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 export class EventController {
@@ -25,6 +26,42 @@ export class EventController {
       }
 
       res.json(event);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Buscar estatísticas do evento
+  static async getStats(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      
+      // Buscar evento
+      const event = await EventModel.findById(id);
+      if (!event) {
+        res.status(404).json({ error: 'Evento não encontrado' });
+        return;
+      }
+
+      // Buscar estatísticas de inscrições
+      const totalRegistrations = await RegistrationModel.countByEvent(id);
+      const approvedRegistrations = await RegistrationModel.countApprovedByEvent(id);
+      
+      // Calcular vagas disponíveis
+      const maxParticipants = event.max_participants || 0;
+      const availableSpots = maxParticipants > 0 ? maxParticipants - approvedRegistrations : null;
+      const percentageFilled = maxParticipants > 0 ? Math.round((approvedRegistrations / maxParticipants) * 100) : 0;
+      const isFull = maxParticipants > 0 && approvedRegistrations >= maxParticipants;
+
+      res.json({
+        event_id: id,
+        total_registrations: totalRegistrations,
+        approved_registrations: approvedRegistrations,
+        max_participants: maxParticipants,
+        available_spots: availableSpots,
+        percentage_filled: percentageFilled,
+        is_full: isFull
+      });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

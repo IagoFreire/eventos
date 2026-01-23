@@ -13,6 +13,7 @@ export const api = isOfflineMode() ? {
   // Mock API
   getEvent: mockApi.getEvent,
   getEvents: mockApi.getEvents,
+  getEventStats: mockApi.getEventStats,
   updateEvent: mockApi.updateEvent,
   getEventSettings: mockApi.getEventSettings,
   updateEventSettings: mockApi.updateEventSettings,
@@ -28,6 +29,7 @@ export const api = isOfflineMode() ? {
   // Real API
   getEvent: realApi.getEvent,
   getEvents: realApi.getEvents,
+  getEventStats: realApi.getEventStats,
   updateEvent: realApi.updateEvent,
   getEventSettings: realApi.getEventSettings,
   updateEventSettings: realApi.updateEventSettings,

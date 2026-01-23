@@ -46,10 +46,16 @@ const Admin: React.FC = () => {
       setRegistrations(registrations.map(r => 
         r.id === updated.id ? updated : r
       ));
-      toast.success(`Check-in realizado para ${registration.name}!`);
+      
+      // Mensagem baseada no novo status
+      if (updated.checked_in) {
+        toast.success(`✅ Check-in realizado para ${registration.name}!`);
+      } else {
+        toast.info(`↩️ Check-in removido para ${registration.name}`);
+      }
     } catch (error) {
       console.error('Erro ao fazer check-in:', error);
-      toast.error('Erro ao fazer check-in. Tente novamente.');
+      toast.error('Erro ao processar check-in. Tente novamente.');
     }
   };
 
@@ -267,16 +273,17 @@ const Admin: React.FC = () => {
                       <td className="px-6 py-4">
                         <button
                           onClick={() => handleCheckIn(registration)}
-                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                          title={registration.checked_in ? 'Clique para remover check-in' : 'Clique para fazer check-in'}
+                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-all hover:scale-105 ${
                             registration.checked_in
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-orange-100 text-orange-700'
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
                           }`}
                         >
                           {registration.checked_in ? (
                             <>
                               <CheckCircle className="w-4 h-4" />
-                              <span>Check-in</span>
+                              <span>Feito</span>
                             </>
                           ) : (
                             <>

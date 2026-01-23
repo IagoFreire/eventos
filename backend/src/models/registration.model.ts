@@ -91,9 +91,10 @@ export class RegistrationModel {
   }
 
   // Fazer check-in
+  // Toggle check-in (marca ou desmarca)
   static async checkIn(id: string): Promise<Registration | null> {
     const result = await pool.query(
-      'UPDATE registrations SET checked_in = true WHERE id = $1 RETURNING *',
+      'UPDATE registrations SET checked_in = NOT checked_in WHERE id = $1 RETURNING *',
       [id]
     );
     return result.rows[0] || null;

@@ -22,6 +22,7 @@ const settingsValidation = [
 // Rotas públicas
 router.get('/', EventController.getAll);
 router.get('/:id', EventController.getById);
+router.get('/:id/stats', EventController.getStats);
 router.get('/:id/settings', EventController.getSettings);
 
 // Rotas protegidas (admin apenas)

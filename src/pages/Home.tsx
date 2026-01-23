@@ -1,16 +1,47 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEvent } from '../contexts/EventContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { MapPin, Calendar, Clock, DollarSign, Users, ChevronRight } from 'lucide-react';
+import { MapPin, Calendar, Clock, DollarSign, Users, ChevronRight, AlertCircle } from 'lucide-react';
 import Loading from '../components/Loading';
+import { api } from '../services/apiSelector';
+
+interface EventStats {
+  event_id: string;
+  total_registrations: number;
+  approved_registrations: number;
+  max_participants: number;
+  available_spots: number | null;
+  percentage_filled: number;
+  is_full: boolean;
+}
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { currentEvent, loading } = useEvent();
   const { settings, loading: loadingSettings } = useSettings();
+  const [stats, setStats] = useState<EventStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
 
-  // Não precisa mais de useEffect! O EventContext já carrega automaticamente
+  useEffect(() => {
+    if (currentEvent) {
+      loadEventStats();
+    }
+  }, [currentEvent]);
+
+  const loadEventStats = async () => {
+    if (!currentEvent) return;
+    
+    setLoadingStats(true);
+    try {
+      const statsData = await api.getEventStats(currentEvent.id);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   if (loading || loadingSettings) {
     return <Loading />;
@@ -77,13 +108,20 @@ const Home: React.FC = () => {
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             {event.description}
           </p>
-          <button
-            onClick={() => navigate('/inscricao')}
-            className="group inline-flex items-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white px-8 py-4 rounded-full hover:shadow-lg hover:scale-105 transition-all"
-          >
-            <span className="text-lg">Fazer Inscrição</span>
-            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </button>
+          {stats?.is_full ? (
+            <div className="inline-flex items-center gap-2 bg-gray-400 text-white px-8 py-4 rounded-full cursor-not-allowed">
+              <AlertCircle className="w-5 h-5" />
+              <span className="text-lg">Vagas Esgotadas</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate('/inscricao')}
+              className="group inline-flex items-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white px-8 py-4 rounded-full hover:shadow-lg hover:scale-105 transition-all"
+            >
+              <span className="text-lg">Fazer Inscrição</span>
+              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          )}
         </div>
       </section>
 
@@ -151,14 +189,38 @@ const Home: React.FC = () => {
               </div>
               <h3 className="text-2xl mb-4 text-gray-800">Vagas Limitadas</h3>
               <div className="space-y-3">
-                <p className="text-gray-600">Apenas {event.max_participants} vagas disponíveis</p>
-                <div className="bg-[#F5F5DC] rounded-full h-3 overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] transition-all"
-                    style={{ width: '45%' }}
-                  />
-                </div>
-                <p className="text-sm text-[#B8860B]">45% das vagas preenchidas</p>
+                {loadingStats ? (
+                  <p className="text-gray-600">Carregando...</p>
+                ) : stats ? (
+                  <>
+                    {stats.is_full ? (
+                      <div className="flex items-center gap-2 text-red-600 mb-2">
+                        <AlertCircle className="w-5 h-5" />
+                        <span className="font-semibold">Vagas Esgotadas!</span>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-gray-600">
+                          {stats.available_spots !== null 
+                            ? `${stats.available_spots} de ${stats.max_participants} vagas disponíveis`
+                            : `${stats.approved_registrations} inscrições confirmadas`
+                          }
+                        </p>
+                        <div className="bg-[#F5F5DC] rounded-full h-3 overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-[#D4AF37] to-[#B8860B] transition-all duration-500"
+                            style={{ width: `${stats.percentage_filled}%` }}
+                          />
+                        </div>
+                        <p className="text-sm text-[#B8860B]">
+                          {stats.percentage_filled}% das vagas preenchidas
+                        </p>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-gray-600">Apenas {event.max_participants} vagas disponíveis</p>
+                )}
               </div>
             </div>
           </div>
@@ -190,13 +252,20 @@ const Home: React.FC = () => {
           <p className="text-xl text-gray-600 mb-8">
             Garanta sua vaga agora e prepare seu coração para dias de transformação
           </p>
-          <button
-            onClick={() => navigate('/inscricao')}
-            className="group inline-flex items-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white px-8 py-4 rounded-full hover:shadow-lg hover:scale-105 transition-all"
-          >
-            <span className="text-lg">Fazer Inscrição Agora</span>
-            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </button>
+          {stats?.is_full ? (
+            <div className="inline-flex items-center gap-2 bg-gray-400 text-white px-8 py-4 rounded-full cursor-not-allowed">
+              <AlertCircle className="w-5 h-5" />
+              <span className="text-lg">Vagas Esgotadas</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate('/inscricao')}
+              className="group inline-flex items-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white px-8 py-4 rounded-full hover:shadow-lg hover:scale-105 transition-all"
+            >
+              <span className="text-lg">Fazer Inscrição Agora</span>
+              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          )}
         </div>
       </section>
     </div>

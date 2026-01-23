@@ -25,10 +25,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const userData = await api.verifyToken();
+        const response = await api.verifyToken();
+        // Backend retorna { user: {...} }
+        const userData = response.user || response;
         setUser(userData);
       } catch (error) {
+        console.error('Erro ao verificar token:', error);
         localStorage.removeItem('token');
+        setUser(null);
       }
     }
     setLoading(false);

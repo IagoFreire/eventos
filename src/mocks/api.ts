@@ -151,6 +151,19 @@ export const mockApi = {
     return registrations[index];
   },
 
+  deleteRegistration: async (id: string): Promise<void> => {
+    await mockDelay();
+    
+    const index = registrations.findIndex(r => r.id === id);
+    if (index === -1) {
+      throw new Error('Inscrição não encontrada');
+    }
+    
+    const deleted = registrations.splice(index, 1)[0];
+    saveToStorage(STORAGE_KEYS.REGISTRATIONS, registrations);
+    console.log('🗑️ [MOCK] Inscrição excluída:', deleted);
+  },
+
   checkIn: async (id: string): Promise<Registration> => {
     await mockDelay();
     
@@ -160,7 +173,16 @@ export const mockApi = {
     }
     
     // Toggle check-in
-    registrations[index].checked_in = !registrations[index].checked_in;
+    const wasCheckedIn = registrations[index].checked_in;
+    registrations[index].checked_in = !wasCheckedIn;
+    
+    // Se está marcando check-in, salvar data. Se desmarcando, remover data.
+    if (registrations[index].checked_in && !wasCheckedIn) {
+      registrations[index].checked_in_date = new Date().toISOString();
+    } else if (!registrations[index].checked_in && wasCheckedIn) {
+      registrations[index].checked_in_date = undefined;
+    }
+    
     saveToStorage(STORAGE_KEYS.REGISTRATIONS, registrations);
     
     const status = registrations[index].checked_in ? '✅ marcado' : '↩️ desmarcado';
@@ -170,7 +192,7 @@ export const mockApi = {
   },
 
   // Pagamento
-  createPayment: async (paymentData: PaymentData): Promise<any> => {
+  createPayment: async (paymentData: any): Promise<any> => {
     await mockDelay(1200);
     
     const payment = {
@@ -191,6 +213,23 @@ export const mockApi = {
       }
     };
     
+    // Atualizar a inscrição com informações de pagamento
+    if (paymentData.registration_id) {
+      const index = registrations.findIndex(r => r.id === paymentData.registration_id);
+      if (index !== -1) {
+        registrations[index] = {
+          ...registrations[index],
+          payment_status: 'approved',
+          payment_id: payment.id,
+          payment_method: paymentData.payment_method_id,
+          payment_amount: paymentData.transaction_amount,
+          payment_date: new Date().toISOString(),
+        };
+        saveToStorage(STORAGE_KEYS.REGISTRATIONS, registrations);
+        console.log('✅ [MOCK] Inscrição atualizada com dados de pagamento');
+      }
+    }
+    
     console.log('✅ [MOCK] Pagamento criado:', payment);
     
     return payment;
@@ -203,6 +242,75 @@ export const mockApi = {
       id: paymentId,
       status: 'approved',
       status_detail: 'accredited',
+    };
+  },
+
+  getInstallments: async (amount: number, paymentMethodId: string = 'credit_card'): Promise<any> => {
+    await mockDelay();
+    
+    // Simular resposta do Mercado Pago com todas as opções de 1 a 12
+    const payerCosts = [];
+    
+    for (let installments = 1; installments <= 12; installments++) {
+      // Simular taxas: 1x sem juros, 2-3x com juros baixos, 4-6x com juros médios, 7-12x com juros altos
+      let interestRate = 0;
+      if (installments === 1) {
+        interestRate = 0;
+      } else if (installments <= 3) {
+        interestRate = 0.0199; // 1.99% ao mês
+      } else if (installments <= 6) {
+        interestRate = 0.0299; // 2.99% ao mês
+      } else {
+        interestRate = 0.0399; // 3.99% ao mês
+      }
+      
+      // Calcular valor da parcela com juros (se houver)
+      let installmentAmount: number;
+      let totalAmount: number;
+      
+      if (interestRate === 0) {
+        // Sem juros: apenas divide
+        const totalInCents = Math.round(amount * 100);
+        const baseValueInCents = Math.floor(totalInCents / installments);
+        const remainder = totalInCents % installments;
+        
+        const installmentsArray = Array(installments).fill(baseValueInCents);
+        for (let i = 0; i < remainder; i++) {
+          installmentsArray[i] += 1;
+        }
+        
+        installmentAmount = installmentsArray[0] / 100;
+        totalAmount = installmentsArray.reduce((sum, val) => sum + val, 0) / 100;
+      } else {
+        // Com juros: cálculo de juros compostos
+        const monthlyRate = interestRate;
+        installmentAmount = amount * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
+        totalAmount = installmentAmount * installments;
+      }
+      
+      payerCosts.push({
+        installments,
+        installment_rate: interestRate,
+        discount_rate: 0,
+        reimbursement_rate: null,
+        labels: installments === 1 ? ['CFT_0%', 'TEA_0%'] : [],
+        installment_rate_collector: [],
+        min_allowed_amount: 0,
+        max_allowed_amount: 1000000,
+        recommended_message: installments === 1 ? 'Pagamento sem juros' : `Parcelado em ${installments}x`,
+        installment_amount: Math.round(installmentAmount * 100) / 100,
+        total_amount: Math.round(totalAmount * 100) / 100,
+      });
+    }
+    
+    return {
+      payment_method_id: paymentMethodId,
+      payment_type_id: 'credit_card',
+      issuer: {
+        id: 'null',
+        name: 'Simulado',
+      },
+      payer_costs: payerCosts,
     };
   },
 

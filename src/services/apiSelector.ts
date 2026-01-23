@@ -20,9 +20,11 @@ export const api = isOfflineMode() ? {
   createRegistration: mockApi.createRegistration,
   getRegistrations: mockApi.getRegistrations,
   updateRegistration: mockApi.updateRegistration,
+  deleteRegistration: mockApi.deleteRegistration,
   checkIn: mockApi.checkIn,
   createPayment: mockApi.createPayment,
   getPaymentStatus: mockApi.getPaymentStatus,
+  getInstallments: mockApi.getInstallments,
   login: mockApi.login,
   verifyToken: mockApi.verifyToken,
 } : {
@@ -36,9 +38,11 @@ export const api = isOfflineMode() ? {
   createRegistration: realApi.createRegistration,
   getRegistrations: realApi.getRegistrations,
   updateRegistration: realApi.updateRegistration,
+  deleteRegistration: realApi.deleteRegistration,
   checkIn: realApi.checkIn,
   createPayment: realApi.createPayment,
   getPaymentStatus: realApi.getPaymentStatus,
+  getInstallments: realApi.getInstallments,
   login: realApi.login,
   verifyToken: realApi.verifyToken,
 };

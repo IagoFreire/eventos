@@ -38,7 +38,7 @@ O sistema utiliza uma paleta de cores elegante e moderna:
 
 **Etapa 2 - Pagamento:**
 - Resumo da inscrição
-- Seleção de método de pagamento (PIX, Cartão, Boleto)
+- Seleção de método de pagamento (PIX, Cartão de Crédito)
 - Integração com Mercado Pago
 - Confirmação do pagamento
 

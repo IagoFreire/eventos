@@ -4,7 +4,11 @@ import { toast } from 'react-toastify';
 import { useRegistration } from '../contexts/RegistrationContext';
 import { useEvent } from '../contexts/EventContext';
 import { api } from '../services/apiSelector';
-import { ArrowLeft, ArrowRight, Check, User, Mail, Phone, Calendar, CheckCircle, Download, Printer, MapPin, Clock, QrCode, Home } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, User, Mail, Phone, Calendar, CheckCircle, Download, Printer, MapPin, Clock, QrCode, Home, Sparkles } from 'lucide-react';
+import PixPayment from '../components/PixPayment';
+import CreditCardPayment from '../components/CreditCardPayment';
+import { generateTestData } from '../utils/generateTestData';
+import { formatPrice } from '../utils/formatPrice';
 
 const Registration: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +16,10 @@ const Registration: React.FC = () => {
   const { currentEvent } = useEvent();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [pixData, setPixData] = useState<any>(null);
+  const [showPixPayment, setShowPixPayment] = useState(false);
+  const [showCreditCardPayment, setShowCreditCardPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card'>('pix');
   const ticketRef = useRef<HTMLDivElement>(null);
 
   const event = currentEvent || {
@@ -30,6 +38,20 @@ const Registration: React.FC = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  // Função para preencher dados de teste
+  const handleFillTestData = () => {
+    const testData = generateTestData();
+    setFormData({
+      ...formData,
+      name: testData.name,
+      email: testData.email,
+      phone: testData.phone,
+      cpf: testData.cpf,
+      address: testData.address,
+    });
+    toast.success('✅ Dados de teste preenchidos!', { autoClose: 2000 });
   };
 
   const validateStep1 = () => {
@@ -52,6 +74,8 @@ const Registration: React.FC = () => {
     if (currentStep === 1) {
       if (validateStep1()) {
         setLoading(true);
+        setError(''); // Limpar erro anterior
+        
         try {
           const registration = await api.createRegistration({
             ...formData,
@@ -59,9 +83,34 @@ const Registration: React.FC = () => {
           });
           setRegistrationId(registration.id);
           setCurrentStep(2);
-        } catch (err) {
-          setError('Erro ao criar inscrição. Tente novamente.');
-          console.error(err);
+          toast.success('✅ Dados salvos! Prossiga para o pagamento.');
+        } catch (err: any) {
+          console.error('❌ Erro ao criar inscrição:', err);
+          
+          // Extrair mensagem de erro do backend
+          let errorMessage = 'Erro ao criar inscrição. Tente novamente.';
+          
+          if (err.response?.data?.error) {
+            errorMessage = err.response.data.error;
+          } else if (err.message) {
+            errorMessage = err.message;
+          }
+          
+          // Traduzir erros comuns
+          if (errorMessage.includes('duplicate key') || errorMessage.includes('already exists')) {
+            errorMessage = '⚠️ Este CPF ou e-mail já está inscrito neste evento!';
+          } else if (errorMessage.includes('event_id')) {
+            errorMessage = '🎫 Evento não encontrado. Recarregue a página.';
+          } else if (errorMessage.includes('email')) {
+            errorMessage = '📧 E-mail inválido. Verifique o formato.';
+          } else if (errorMessage.includes('cpf')) {
+            errorMessage = '📋 CPF inválido. Use o formato: 123.456.789-09';
+          }
+          
+          setError(errorMessage);
+          toast.error(errorMessage, {
+            autoClose: 5000,
+          });
         } finally {
           setLoading(false);
         }
@@ -75,16 +124,28 @@ const Registration: React.FC = () => {
 
   const handlePayment = async () => {
     if (!registrationId) {
-      setError('Erro: ID de inscrição não encontrado. Por favor, reinicie o processo.');
+      const errorMsg = 'ID de inscrição não encontrado. Por favor, reinicie o processo.';
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
+    // Se for cartão de crédito, mostrar formulário
+    if (paymentMethod === 'credit_card') {
+      setShowCreditCardPayment(true);
+      return;
+    }
+
+    // Se for PIX, processar normalmente
     setLoading(true);
+    setError(''); // Limpar erro anterior
+    
     try {
       const paymentData = {
-        transaction_amount: event.price,
+        registration_id: registrationId,
+        transaction_amount: Number(event.price), // Garantir que seja número
         description: `Inscrição - ${event.title}`,
-        payment_method_id: 'pix',
+        payment_method_id: paymentMethod === 'pix' ? 'pix' : 'credit_card',
         payer: {
           email: formData.email,
           identification: {
@@ -95,15 +156,73 @@ const Registration: React.FC = () => {
       };
 
       const payment = await api.createPayment(paymentData);
-      console.log('Pagamento criado:', payment);
+      console.log('✅ Pagamento criado:', payment);
       
-      // Avança para a etapa de confirmação
+      // Se tiver dados do PIX (QR Code), mostrar componente de pagamento PIX
+      if (payment.pix && payment.pix.qr_code) {
+        setPixData(payment.pix);
+        setShowPixPayment(true);
+        toast.info('📱 Use o QR Code ou copie o código PIX para pagar');
+      } else {
+        // Se não tiver PIX (modo simulado), avança direto
+        setCurrentStep(3);
+        toast.success('✅ Pagamento processado com sucesso!');
+      }
+    } catch (err: any) {
+      console.error('❌ Erro ao processar pagamento:', err);
+      
+      // Extrair mensagem de erro do backend
+      let errorMessage = 'Erro ao processar pagamento. Tente novamente.';
+      
+      if (err.response?.data?.error) {
+        // Erro do backend
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        // Erro genérico
+        errorMessage = err.message;
+      }
+      
+      // Traduzir erros comuns do Mercado Pago
+      if (errorMessage.includes('transaction_amount')) {
+        errorMessage = '💰 Valor da transação inválido. Verifique o valor do evento.';
+      } else if (errorMessage.includes('identification number')) {
+        errorMessage = '📋 CPF inválido. Use: 123.456.789-09';
+      } else if (errorMessage.includes('invalid_access_token')) {
+        errorMessage = '🔑 Token do Mercado Pago inválido. Contate o administrador.';
+      } else if (errorMessage.includes('payer.email')) {
+        errorMessage = '📧 E-mail inválido. Verifique seu e-mail.';
+      }
+      
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        autoClose: 5000, // 5 segundos para ler a mensagem
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePixPaymentConfirmed = async () => {
+    if (!registrationId) {
+      toast.error('ID de inscrição não encontrado.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Atualizar status para aprovado (simula aprovação do pagamento)
+      await api.updateRegistration(registrationId, {
+        payment_status: 'approved'
+      });
+      
       setCurrentStep(3);
-      toast.success('Pagamento processado com sucesso!');
-    } catch (err) {
-      setError('Erro ao processar pagamento. Tente novamente.');
-      toast.error('Erro ao processar pagamento');
-      console.error(err);
+      toast.success('✅ Pagamento confirmado!');
+    } catch (error: any) {
+      console.error('❌ Erro ao confirmar pagamento:', error);
+      
+      // Se falhar a atualização, permite prosseguir mesmo assim
+      setCurrentStep(3);
+      toast.warning('Prosseguindo para confirmação...');
     } finally {
       setLoading(false);
     }
@@ -152,12 +271,6 @@ const Registration: React.FC = () => {
     });
   };
 
-  const formatPrice = (price: number) => {
-    return price.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    });
-  };
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -231,7 +344,18 @@ const Registration: React.FC = () => {
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-[#E8DCC4] shadow-lg">
           {currentStep === 1 && (
             <div className="space-y-6">
-              <h2 className="text-2xl mb-6 text-gray-800">Informações Pessoais</h2>
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-2xl text-gray-800">Informações Pessoais</h2>
+                <button
+                  type="button"
+                  onClick={handleFillTestData}
+                  className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors text-sm font-medium"
+                  title="Preencher com dados de teste (CPF válido)"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Preencher Teste
+                </button>
+              </div>
               
               <div>
                 <label className="block text-gray-700 mb-2">
@@ -313,7 +437,7 @@ const Registration: React.FC = () => {
             </div>
           )}
 
-          {currentStep === 2 && (
+          {currentStep === 2 && !showPixPayment && !showCreditCardPayment && (
             <div className="space-y-6">
               <div className="bg-[#F5F5DC] rounded-xl p-6 mb-6">
                 <h3 className="text-xl mb-4 text-gray-800">Resumo da Inscrição</h3>
@@ -336,25 +460,51 @@ const Registration: React.FC = () => {
               <h2 className="text-2xl mb-6 text-gray-800">Escolha a forma de pagamento</h2>
 
               <div className="space-y-4">
-                <div className="border border-[#E8DCC4] rounded-lg p-4 hover:border-[#D4AF37] cursor-pointer transition-colors">
+                <div 
+                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                    paymentMethod === 'pix' 
+                      ? 'border-[#D4AF37] bg-[#F5F5DC]' 
+                      : 'border-[#E8DCC4] hover:border-[#D4AF37]'
+                  }`}
+                  onClick={() => setPaymentMethod('pix')}
+                >
                   <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="radio" name="payment" defaultChecked className="w-4 h-4" />
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      checked={paymentMethod === 'pix'}
+                      onChange={() => setPaymentMethod('pix')}
+                      className="w-4 h-4" 
+                    />
                     <span className="text-2xl">📱</span>
-                    <span className="text-gray-800">PIX</span>
+                    <div className="flex-1">
+                      <p className="text-gray-800 font-medium">PIX</p>
+                      <p className="text-sm text-gray-600">Aprovação instantânea</p>
+                    </div>
                   </label>
                 </div>
-                <div className="border border-[#E8DCC4] rounded-lg p-4 hover:border-[#D4AF37] cursor-pointer transition-colors">
+                
+                <div 
+                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                    paymentMethod === 'credit_card' 
+                      ? 'border-[#D4AF37] bg-[#F5F5DC]' 
+                      : 'border-[#E8DCC4] hover:border-[#D4AF37]'
+                  }`}
+                  onClick={() => setPaymentMethod('credit_card')}
+                >
                   <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="radio" name="payment" className="w-4 h-4" />
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      checked={paymentMethod === 'credit_card'}
+                      onChange={() => setPaymentMethod('credit_card')}
+                      className="w-4 h-4" 
+                    />
                     <span className="text-2xl">💳</span>
-                    <span className="text-gray-800">Cartão de Crédito</span>
-                  </label>
-                </div>
-                <div className="border border-[#E8DCC4] rounded-lg p-4 hover:border-[#D4AF37] cursor-pointer transition-colors">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="radio" name="payment" className="w-4 h-4" />
-                    <span className="text-2xl">📄</span>
-                    <span className="text-gray-800">Boleto</span>
+                    <div className="flex-1">
+                      <p className="text-gray-800 font-medium">Cartão de Crédito</p>
+                      <p className="text-sm text-gray-600">Parcelamento disponível</p>
+                    </div>
                   </label>
                 </div>
               </div>
@@ -381,6 +531,48 @@ const Registration: React.FC = () => {
                 Ao confirmar, você concorda com nossos termos de serviço
               </p>
             </div>
+          )}
+
+          {currentStep === 2 && showPixPayment && (
+            <div className="space-y-6">
+              <PixPayment
+                qrCode={pixData?.qr_code}
+                qrCodeBase64={pixData?.qr_code_base64}
+                ticketUrl={pixData?.ticket_url}
+                amount={event.price}
+                onPaymentConfirmed={handlePixPaymentConfirmed}
+                isTestMode={true} // Sempre em modo teste para facilitar
+              />
+              
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowPixPayment(false)}
+                  className="flex-1 border border-[#E8DCC4] text-gray-700 py-3 rounded-full hover:bg-white/50 transition-all"
+                >
+                  Voltar
+                </button>
+                <button
+                  onClick={handlePixPaymentConfirmed}
+                  className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white py-3 rounded-full hover:shadow-lg transition-all"
+                >
+                  <CheckCircle className="w-5 h-5" />
+                  <span>Já Paguei</span>
+                </button>
+              </div>
+
+              <p className="text-sm text-gray-500 text-center">
+                Clique em "Já Paguei" após realizar o pagamento
+              </p>
+            </div>
+          )}
+
+          {currentStep === 2 && showCreditCardPayment && (
+            <CreditCardPayment
+              amount={event.price}
+              registrationId={registrationId || ''}
+              onPaymentSuccess={handlePixPaymentConfirmed}
+              onCancel={() => setShowCreditCardPayment(false)}
+            />
           )}
 
           {currentStep === 3 && (
@@ -503,7 +695,7 @@ const Registration: React.FC = () => {
                       <div className="flex-1 text-center md:text-right">
                         <p className="text-sm text-gray-500 mb-1">ID do Ingresso:</p>
                         <p className="font-mono text-lg text-[#B8860B] font-bold">
-                          {registrationId?.toUpperCase().slice(0, 12)}
+                          {registrationId ? registrationId.split('-')[0].toUpperCase() : 'N/A'}
                         </p>
                         <p className="text-xs text-gray-500 mt-4">
                           Emitido em: {formatDateTime(new Date().toISOString())}

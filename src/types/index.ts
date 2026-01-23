@@ -44,7 +44,11 @@ export interface Registration {
   address: string;
   payment_status: 'pending' | 'approved' | 'rejected';
   payment_id?: string;
+  payment_method?: string;
+  payment_amount?: number;
+  payment_date?: string;
   checked_in: boolean;
+  checked_in_date?: string;
   created_at: string;
 }
 

@@ -69,6 +69,10 @@ export const updateRegistration = async (id: string, data: Partial<Registration>
   return response.data;
 };
 
+export const deleteRegistration = async (id: string): Promise<void> => {
+  await api.delete(`/registrations/${id}`);
+};
+
 export const checkIn = async (id: string): Promise<Registration> => {
   const response = await api.patch(`/registrations/${id}/checkin`);
   return response.data;
@@ -82,6 +86,13 @@ export const createPayment = async (paymentData: PaymentData): Promise<any> => {
 
 export const getPaymentStatus = async (paymentId: string): Promise<any> => {
   const response = await api.get(`/payments/${paymentId}`);
+  return response.data;
+};
+
+export const getInstallments = async (amount: number, paymentMethodId: string = 'credit_card'): Promise<any> => {
+  const response = await api.get('/payments/installments', {
+    params: { amount, payment_method_id: paymentMethodId }
+  });
   return response.data;
 };
 

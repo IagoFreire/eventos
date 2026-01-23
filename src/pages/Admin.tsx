@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import type { Registration } from '../types';
 import { api } from '../services/apiSelector';
-import { ArrowLeft, Search, Edit2, X, CheckCircle, Circle, User, LogOut } from 'lucide-react';
+import { ArrowLeft, Search, Edit2, X, CheckCircle, Circle, User, LogOut, Trash2, Calendar, CreditCard, DollarSign, FileText, Mail, Phone, MapPin, Clock } from 'lucide-react';
 import Loading from '../components/Loading';
 
 const Admin: React.FC = () => {
@@ -16,6 +16,10 @@ const Admin: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [registrationToDelete, setRegistrationToDelete] = useState<Registration | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedDetailsRegistration, setSelectedDetailsRegistration] = useState<Registration | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'admin') {
@@ -25,15 +29,37 @@ const Admin: React.FC = () => {
     loadRegistrations();
   }, [isAuthenticated, user, navigate]);
 
+  // Bloquear scroll do body quando modais estiverem abertos
+  useEffect(() => {
+    if (isEditModalOpen || isDeleteModalOpen || isDetailsModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup: restaurar scroll quando componente desmontar
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isEditModalOpen, isDeleteModalOpen, isDetailsModalOpen]);
+
   const loadRegistrations = async () => {
     setLoading(true);
     try {
       const data = await api.getRegistrations();
       setRegistrations(data);
-    } catch (error) {
-      console.error('Erro ao carregar inscrições:', error);
-      if ((error as any)?.response?.status === 401) {
+    } catch (error: any) {
+      console.error('❌ Erro ao carregar inscrições:', error);
+      
+      if (error.response?.status === 401) {
+        toast.error('🔒 Sessão expirada. Faça login novamente.');
         navigate('/login');
+      } else {
+        let errorMessage = 'Erro ao carregar inscrições.';
+        if (error.response?.data?.error) {
+          errorMessage = error.response.data.error;
+        }
+        toast.error(errorMessage, { autoClose: 5000 });
       }
     } finally {
       setLoading(false);
@@ -53,15 +79,63 @@ const Admin: React.FC = () => {
       } else {
         toast.info(`↩️ Check-in removido para ${registration.name}`);
       }
-    } catch (error) {
-      console.error('Erro ao fazer check-in:', error);
-      toast.error('Erro ao processar check-in. Tente novamente.');
+    } catch (error: any) {
+      console.error('❌ Erro ao fazer check-in:', error);
+      
+      let errorMessage = 'Erro ao processar check-in. Tente novamente.';
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+        
+        // Traduzir erros comuns
+        if (errorMessage.includes('payment')) {
+          errorMessage = '⚠️ Check-in permitido apenas para pagamentos aprovados!';
+        }
+      }
+      
+      toast.error(errorMessage, { autoClose: 5000 });
     }
   };
 
   const handleEdit = (registration: Registration) => {
     setSelectedRegistration(registration);
     setIsEditModalOpen(true);
+  };
+
+  const handleRowClick = (registration: Registration, e: React.MouseEvent) => {
+    // Não abrir modal se clicar em botões ou links
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a')) {
+      return;
+    }
+    
+    setSelectedDetailsRegistration(registration);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleDeleteClick = (registration: Registration) => {
+    setRegistrationToDelete(registration);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!registrationToDelete) return;
+
+    try {
+      await api.deleteRegistration(registrationToDelete.id);
+      setRegistrations(registrations.filter(r => r.id !== registrationToDelete.id));
+      setIsDeleteModalOpen(false);
+      setRegistrationToDelete(null);
+      toast.success(`🗑️ Inscrição de ${registrationToDelete.name} excluída com sucesso!`);
+    } catch (error: any) {
+      console.error('❌ Erro ao excluir inscrição:', error);
+      
+      let errorMessage = 'Erro ao excluir inscrição. Tente novamente.';
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
+      toast.error(errorMessage, { autoClose: 5000 });
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -75,9 +149,15 @@ const Admin: React.FC = () => {
       setIsEditModalOpen(false);
       setSelectedRegistration(null);
       toast.success('Inscrição atualizada com sucesso!');
-    } catch (error) {
-      console.error('Erro ao atualizar inscrição:', error);
-      toast.error('Erro ao atualizar inscrição. Tente novamente.');
+    } catch (error: any) {
+      console.error('❌ Erro ao atualizar inscrição:', error);
+      
+      let errorMessage = 'Erro ao atualizar inscrição. Tente novamente.';
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
+      toast.error(errorMessage, { autoClose: 5000 });
     }
   };
 
@@ -253,7 +333,6 @@ const Admin: React.FC = () => {
                 <tr>
                   <th className="px-6 py-4 text-left text-gray-700">Status</th>
                   <th className="px-6 py-4 text-left text-gray-700">Nome</th>
-                  <th className="px-6 py-4 text-left text-gray-700">E-mail</th>
                   <th className="px-6 py-4 text-left text-gray-700">Telefone</th>
                   <th className="px-6 py-4 text-left text-gray-700">CPF</th>
                   <th className="px-6 py-4 text-left text-gray-700">Pagamento</th>
@@ -263,13 +342,17 @@ const Admin: React.FC = () => {
               <tbody>
                 {filteredRegistrations.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                       Nenhuma inscrição encontrada
                     </td>
                   </tr>
                 ) : (
                   filteredRegistrations.map((registration) => (
-                    <tr key={registration.id} className="border-t border-[#E8DCC4] hover:bg-[#F5F5DC]/30">
+                    <tr 
+                      key={registration.id} 
+                      className="border-t border-[#E8DCC4] hover:bg-[#F5F5DC]/30 cursor-pointer transition-colors"
+                      onClick={(e) => handleRowClick(registration, e)}
+                    >
                       <td className="px-6 py-4">
                         <button
                           onClick={() => handleCheckIn(registration)}
@@ -294,7 +377,6 @@ const Admin: React.FC = () => {
                         </button>
                       </td>
                       <td className="px-6 py-4 text-gray-800">{registration.name}</td>
-                      <td className="px-6 py-4 text-gray-600">{registration.email}</td>
                       <td className="px-6 py-4 text-gray-600">{registration.phone}</td>
                       <td className="px-6 py-4 text-gray-600">{registration.cpf}</td>
                       <td className="px-6 py-4">
@@ -318,6 +400,13 @@ const Admin: React.FC = () => {
                             title="Editar"
                           >
                             <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(registration)}
+                            className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                            title="Excluir"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -416,6 +505,298 @@ const Admin: React.FC = () => {
                 className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white py-2 rounded-lg hover:shadow-lg transition-all"
               >
                 Salvar
+              </button>
+            </div>
+            </div>
+          </div>
+        )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && registrationToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setIsDeleteModalOpen(false)}>
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl text-gray-800">Confirmar Exclusão</h2>
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="mb-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <Trash2 className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-red-900 font-semibold mb-1">
+                      Atenção! Esta ação não pode ser desfeita.
+                    </p>
+                    <p className="text-red-700 text-sm">
+                      Todos os dados da inscrição serão permanentemente excluídos.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-gray-700">
+                <p><strong>Nome:</strong> {registrationToDelete.name}</p>
+                <p><strong>E-mail:</strong> {registrationToDelete.email}</p>
+                <p><strong>CPF:</strong> {registrationToDelete.cpf}</p>
+                <p><strong>Status:</strong> {
+                  registrationToDelete.payment_status === 'approved' ? '✓ Aprovado' :
+                  registrationToDelete.payment_status === 'pending' ? '⏱ Pendente' :
+                  '✗ Rejeitado'
+                }</p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="flex-1 border border-[#E8DCC4] text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleConfirmDelete}
+                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Excluir</span>
+              </button>
+            </div>
+            </div>
+          </div>
+        )}
+
+      {/* Details Modal */}
+      {isDetailsModalOpen && selectedDetailsRegistration && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setIsDetailsModalOpen(false)}>
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header Fixo */}
+            <div className="flex justify-between items-center p-8 pb-6 border-b border-gray-200 flex-shrink-0">
+              <h2 className="text-2xl text-gray-800 font-bold">Detalhes da Inscrição</h2>
+              <button
+                onClick={() => setIsDetailsModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Conteúdo com Scroll */}
+            <div className="overflow-y-auto flex-1 px-8 py-6">
+              <div className="space-y-6">
+              {/* Informações Pessoais */}
+              <div className="bg-[#F5F5DC] rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  Informações Pessoais
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Nome Completo</p>
+                    <p className="text-gray-800 font-medium">{selectedDetailsRegistration.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                      <Mail className="w-4 h-4" />
+                      E-mail
+                    </p>
+                    <p className="text-gray-800 font-medium">{selectedDetailsRegistration.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                      <Phone className="w-4 h-4" />
+                      Telefone
+                    </p>
+                    <p className="text-gray-800 font-medium">{selectedDetailsRegistration.phone || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">CPF</p>
+                    <p className="text-gray-800 font-medium">{selectedDetailsRegistration.cpf || 'Não informado'}</p>
+                  </div>
+                  {selectedDetailsRegistration.address && (
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        Endereço
+                      </p>
+                      <p className="text-gray-800 font-medium">{selectedDetailsRegistration.address}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Informações de Pagamento */}
+              <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Informações de Pagamento
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Status do Pagamento</p>
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                      selectedDetailsRegistration.payment_status === 'approved' 
+                        ? 'bg-green-100 text-green-700' 
+                        : selectedDetailsRegistration.payment_status === 'pending'
+                        ? 'bg-orange-100 text-orange-700'
+                        : 'bg-red-100 text-red-700'
+                    }`}>
+                      {selectedDetailsRegistration.payment_status === 'approved' && '✓ Aprovado'}
+                      {selectedDetailsRegistration.payment_status === 'pending' && '⏱ Pendente'}
+                      {selectedDetailsRegistration.payment_status === 'rejected' && '✗ Rejeitado'}
+                    </span>
+                  </div>
+                  {selectedDetailsRegistration.payment_method && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Método de Pagamento</p>
+                      <p className="text-gray-800 font-medium flex items-center gap-2">
+                        {selectedDetailsRegistration.payment_method === 'pix' ? '📱 PIX' : 
+                         selectedDetailsRegistration.payment_method === 'credit_card' ? '💳 Cartão de Crédito' : 
+                         selectedDetailsRegistration.payment_method}
+                      </p>
+                    </div>
+                  )}
+                  {selectedDetailsRegistration.payment_amount && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                        <DollarSign className="w-4 h-4" />
+                        Valor Pago
+                      </p>
+                      <p className="text-gray-800 font-medium text-lg text-green-600">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedDetailsRegistration.payment_amount)}
+                      </p>
+                    </div>
+                  )}
+                  {selectedDetailsRegistration.payment_date && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        Data do Pagamento
+                      </p>
+                      <p className="text-gray-800 font-medium">
+                        {new Date(selectedDetailsRegistration.payment_date).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  )}
+                  {selectedDetailsRegistration.payment_id && (
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-gray-600 mb-1">ID do Pagamento</p>
+                      <p className="text-gray-800 font-medium font-mono text-sm break-all">
+                        {selectedDetailsRegistration.payment_id}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Informações de Check-in */}
+              <div className="bg-green-50 rounded-xl p-6 border border-green-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  Check-in
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Status</p>
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                      selectedDetailsRegistration.checked_in
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-orange-100 text-orange-700'
+                    }`}>
+                      {selectedDetailsRegistration.checked_in ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 inline mr-1" />
+                          Realizado
+                        </>
+                      ) : (
+                        <>
+                          <Circle className="w-4 h-4 inline mr-1" />
+                          Pendente
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  {selectedDetailsRegistration.checked_in_date && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        Data do Check-in
+                      </p>
+                      <p className="text-gray-800 font-medium">
+                        {new Date(selectedDetailsRegistration.checked_in_date).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Informações do Sistema */}
+              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Informações do Sistema
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">ID da Inscrição</p>
+                    <p className="text-gray-800 font-medium font-mono text-sm">
+                      {selectedDetailsRegistration.id.split('-')[0].toUpperCase()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      Data de Criação
+                    </p>
+                    <p className="text-gray-800 font-medium">
+                      {new Date(selectedDetailsRegistration.created_at).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              </div>
+            </div>
+
+            {/* Footer Fixo */}
+            <div className="flex gap-4 p-8 pt-6 border-t border-gray-200 flex-shrink-0">
+              <button
+                onClick={() => {
+                  setIsDetailsModalOpen(false);
+                  handleEdit(selectedDetailsRegistration);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#F5F5DC] text-[#B8860B] py-3 rounded-lg hover:bg-[#E8DCC4] transition-colors"
+              >
+                <Edit2 className="w-4 h-4" />
+                <span>Editar</span>
+              </button>
+              <button
+                onClick={() => setIsDetailsModalOpen(false)}
+                className="flex-1 border border-[#E8DCC4] text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Fechar
               </button>
             </div>
           </div>

@@ -81,11 +81,26 @@ export class RegistrationModel {
     return result.rows[0] || null;
   }
 
-  // Atualizar status de pagamento
-  static async updatePaymentStatus(id: string, paymentStatus: string, paymentId?: string): Promise<Registration | null> {
+  // Atualizar status de pagamento com informações completas
+  static async updatePaymentStatus(
+    id: string, 
+    paymentStatus: string, 
+    paymentId?: string,
+    paymentMethod?: string,
+    paymentAmount?: number
+  ): Promise<Registration | null> {
+    const paymentDate = paymentStatus === 'approved' ? new Date() : null;
+    
     const result = await pool.query(
-      'UPDATE registrations SET payment_status = $1, payment_id = $2 WHERE id = $3 RETURNING *',
-      [paymentStatus, paymentId, id]
+      `UPDATE registrations 
+       SET payment_status = $1, 
+           payment_id = $2, 
+           payment_method = $3,
+           payment_amount = $4,
+           payment_date = $5
+       WHERE id = $6 
+       RETURNING *`,
+      [paymentStatus, paymentId, paymentMethod, paymentAmount, paymentDate, id]
     );
     return result.rows[0] || null;
   }
@@ -93,9 +108,23 @@ export class RegistrationModel {
   // Fazer check-in
   // Toggle check-in (marca ou desmarca)
   static async checkIn(id: string): Promise<Registration | null> {
-    const result = await pool.query(
-      'UPDATE registrations SET checked_in = NOT checked_in WHERE id = $1 RETURNING *',
+    // Primeiro, verificar o estado atual
+    const current = await pool.query(
+      'SELECT checked_in FROM registrations WHERE id = $1',
       [id]
+    );
+    
+    if (current.rows.length === 0) {
+      return null;
+    }
+    
+    const isCurrentlyCheckedIn = current.rows[0].checked_in;
+    const newCheckedInStatus = !isCurrentlyCheckedIn;
+    const checkInDate = newCheckedInStatus ? new Date() : null;
+    
+    const result = await pool.query(
+      'UPDATE registrations SET checked_in = $1, checked_in_date = $2 WHERE id = $3 RETURNING *',
+      [newCheckedInStatus, checkInDate, id]
     );
     return result.rows[0] || null;
   }

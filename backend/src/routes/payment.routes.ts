@@ -14,6 +14,7 @@ const paymentValidation = [
 ];
 
 // Rotas
+router.get('/installments', PaymentController.getInstallments);
 router.post('/', paymentValidation, validate, PaymentController.create);
 router.get('/:id', PaymentController.getStatus);
 router.post('/webhook', PaymentController.webhook);

@@ -5,6 +5,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import { MapPin, Calendar, Clock, DollarSign, Users, ChevronRight, AlertCircle } from 'lucide-react';
 import Loading from '../components/Loading';
 import { api } from '../services/apiSelector';
+import { formatPrice } from '../utils/formatPrice';
 
 interface EventStats {
   event_id: string;
@@ -85,12 +86,6 @@ const Home: React.FC = () => {
     });
   };
 
-  const formatPrice = (price: number) => {
-    return price.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    });
-  };
 
   return (
     <div className="min-h-screen">

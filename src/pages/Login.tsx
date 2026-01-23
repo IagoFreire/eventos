@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeft, Lock, Mail, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -24,9 +25,28 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       await login(email, password);
+      toast.success('✅ Login realizado com sucesso!');
       navigate('/admin');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Credenciais inválidas. Tente novamente.');
+      console.error('❌ Erro ao fazer login:', err);
+      
+      let errorMessage = 'Credenciais inválidas. Tente novamente.';
+      
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+        
+        // Traduzir erros comuns
+        if (errorMessage.includes('Usuário não encontrado')) {
+          errorMessage = '👤 Usuário não encontrado. Verifique o e-mail.';
+        } else if (errorMessage.includes('Senha incorreta')) {
+          errorMessage = '🔒 Senha incorreta. Tente novamente.';
+        }
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      
+      setError(errorMessage);
+      toast.error(errorMessage, { autoClose: 5000 });
     } finally {
       setLoading(false);
     }

@@ -207,35 +207,6 @@ const payment = {
 };
 ```
 
-### 3. Boleto
-
-```javascript
-const payment = {
-  transaction_amount: 350.00,
-  description: 'Inscrição - Retiro Espiritual 2026',
-  payment_method_id: 'bolbradesco',
-  payer: {
-    email: 'user@email.com',
-    first_name: 'João',
-    last_name: 'Silva',
-    identification: {
-      type: 'CPF',
-      number: '12345678900'
-    },
-    address: {
-      zip_code: '01234567',
-      street_name: 'Rua das Flores',
-      street_number: '123',
-      neighborhood: 'Centro',
-      city: 'São Paulo',
-      federal_unit: 'SP'
-    }
-  }
-};
-
-// Retorna:
-// - payment.transaction_details.external_resource_url (URL do boleto)
-```
 
 ## 🎨 Frontend - Exibição do Pagamento
 

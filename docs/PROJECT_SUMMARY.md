@@ -145,7 +145,7 @@ eventos/
 ### ✅ Mercado Pago
 - Estrutura de pagamento
 - Documentação completa
-- Múltiplos métodos (PIX, Cartão, Boleto)
+- Múltiplos métodos (PIX, Cartão de Crédito)
 
 ## 🎨 Responsividade
 

@@ -71,7 +71,7 @@ Integração completa com Mercado Pago
 - Obter credenciais
 - Configuração
 - Implementação no backend
-- Tipos de pagamento (PIX, Cartão, Boleto)
+- Tipos de pagamento (PIX, Cartão de Crédito)
 - Webhooks
 - Testes
 - Segurança

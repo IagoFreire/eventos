@@ -221,7 +221,7 @@ const Confirmation: React.FC = () => {
                 <div className="text-center">
                   <p className="text-sm text-gray-500 mb-1">Código do Ingresso</p>
                   <p className="text-lg text-gray-800 font-mono tracking-wider">
-                    {registration.id.toUpperCase()}
+                    {registration.id.split('-')[0].toUpperCase()}
                   </p>
                 </div>
               </div>

@@ -125,6 +125,45 @@ export class RegistrationController {
     }
   }
 
+  // Fazer check-in apenas (não remove se já estiver feito) - usado pelo QR code
+  static async checkInOnly(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      
+      // Verificar se a inscrição existe e o pagamento foi aprovado
+      const existing = await RegistrationModel.findById(id);
+      if (!existing) {
+        res.status(404).json({ error: 'Inscrição não encontrada' });
+        return;
+      }
+
+      if (existing.payment_status !== 'approved') {
+        res.status(400).json({ error: 'Check-in permitido apenas para inscrições com pagamento aprovado' });
+        return;
+      }
+
+      // Verificar se já está feito
+      if (existing.checked_in) {
+        res.status(400).json({ 
+          error: 'Check-in já realizado',
+          registration: existing 
+        });
+        return;
+      }
+
+      // Marcar check-in apenas
+      const registration = await RegistrationModel.checkInOnly(id);
+      if (!registration) {
+        res.status(400).json({ error: 'Check-in já realizado' });
+        return;
+      }
+      
+      res.json(registration);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
   // Deletar inscrição
   static async delete(req: AuthRequest, res: Response): Promise<void> {
     try {

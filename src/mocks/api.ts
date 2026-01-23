@@ -1,4 +1,4 @@
-import type { Event, Registration, PaymentData, EventSettings } from '../types';
+import type { Event, Registration, EventSettings } from '../types';
 import { 
   mockEvents, 
   mockRegistrations, 
@@ -136,6 +136,17 @@ export const mockApi = {
     return registrations;
   },
 
+  getRegistrationById: async (id: string): Promise<Registration> => {
+    await mockDelay();
+    
+    const registration = registrations.find(r => r.id === id);
+    if (!registration) {
+      throw new Error('Inscrição não encontrada');
+    }
+    
+    return registration;
+  },
+
   getRegistrationsByCpf: async (cpf: string): Promise<Registration[]> => {
     await mockDelay();
     
@@ -213,6 +224,38 @@ export const mockApi = {
     
     const status = registrations[index].checked_in ? '✅ marcado' : '↩️ desmarcado';
     console.log(`[MOCK] Check-in ${status}:`, registrations[index]);
+    
+    return registrations[index];
+  },
+
+  checkInOnly: async (id: string): Promise<Registration> => {
+    await mockDelay();
+    
+    const index = registrations.findIndex(r => r.id === id);
+    if (index === -1) {
+      throw new Error('Inscrição não encontrada');
+    }
+    
+    // Verificar se já está feito
+    if (registrations[index].checked_in) {
+      const error: any = new Error('Check-in já realizado');
+      error.response = {
+        status: 400,
+        data: {
+          error: 'Check-in já realizado',
+          registration: registrations[index]
+        }
+      };
+      throw error;
+    }
+    
+    // Marcar check-in apenas
+    registrations[index].checked_in = true;
+    registrations[index].checked_in_date = new Date().toISOString();
+    
+    saveToStorage(STORAGE_KEYS.REGISTRATIONS, registrations);
+    
+    console.log(`[MOCK] Check-in marcado:`, registrations[index]);
     
     return registrations[index];
   },

@@ -203,6 +203,13 @@ const Admin: React.FC = () => {
             
             <div className="flex gap-3">
               <button
+                onClick={() => navigate('/admin/checkin')}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transition-all"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Check-in QR Code</span>
+              </button>
+              <button
                 onClick={() => navigate('/admin/configuracoes')}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white rounded-lg hover:shadow-lg transition-all"
               >

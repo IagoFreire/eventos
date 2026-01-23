@@ -81,7 +81,7 @@ export const getInstallments = async (amount: number, paymentMethodId: string = 
       throw new Error(`Mercado Pago API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any[];
 
     // Retornar a primeira opção (geralmente a mais comum)
     return data[0] || null;

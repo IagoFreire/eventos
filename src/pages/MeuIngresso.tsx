@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { toast } from 'react-toastify';
 import { QRCodeSVG } from 'qrcode.react';
-import { Search, Download, Printer, Calendar, Clock, MapPin, User, Mail, Phone, QrCode } from 'lucide-react';
+import { Search, Download, Printer, Calendar, Clock, MapPin, QrCode } from 'lucide-react';
 import { api } from '../services/apiSelector';
 import { getEvent } from '../services/api';
 import type { Registration, Event } from '../types';

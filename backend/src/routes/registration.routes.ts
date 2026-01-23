@@ -26,6 +26,7 @@ router.get('/', authenticateToken, requireAdmin, RegistrationController.getAll);
 router.get('/:id', authenticateToken, requireAdmin, RegistrationController.getById);
 router.put('/:id', authenticateToken, requireAdmin, RegistrationController.update);
 router.patch('/:id/checkin', authenticateToken, requireAdmin, RegistrationController.checkIn);
+router.patch('/:id/checkin-only', authenticateToken, requireAdmin, RegistrationController.checkInOnly);
 router.delete('/:id', authenticateToken, requireAdmin, RegistrationController.delete);
 
 export default router;

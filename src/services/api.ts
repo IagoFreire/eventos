@@ -64,6 +64,11 @@ export const getRegistrations = async (eventId?: string): Promise<Registration[]
   return response.data;
 };
 
+export const getRegistrationById = async (id: string): Promise<Registration> => {
+  const response = await api.get(`/registrations/${id}`);
+  return response.data;
+};
+
 export const updateRegistration = async (id: string, data: Partial<Registration>): Promise<Registration> => {
   const response = await api.put(`/registrations/${id}`, data);
   return response.data;
@@ -75,6 +80,11 @@ export const deleteRegistration = async (id: string): Promise<void> => {
 
 export const checkIn = async (id: string): Promise<Registration> => {
   const response = await api.patch(`/registrations/${id}/checkin`);
+  return response.data;
+};
+
+export const checkInOnly = async (id: string): Promise<Registration> => {
+  const response = await api.patch(`/registrations/${id}/checkin-only`);
   return response.data;
 };
 

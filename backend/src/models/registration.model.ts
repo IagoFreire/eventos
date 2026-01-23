@@ -129,6 +129,34 @@ export class RegistrationModel {
     return result.rows[0] || null;
   }
 
+  // Fazer check-in apenas (não remove se já estiver feito)
+  static async checkInOnly(id: string): Promise<Registration | null> {
+    // Primeiro, verificar o estado atual
+    const current = await pool.query(
+      'SELECT checked_in FROM registrations WHERE id = $1',
+      [id]
+    );
+    
+    if (current.rows.length === 0) {
+      return null;
+    }
+    
+    const isCurrentlyCheckedIn = current.rows[0].checked_in;
+    
+    // Se já estiver feito, retornar null (será tratado como erro no controller)
+    if (isCurrentlyCheckedIn) {
+      return null;
+    }
+    
+    // Marcar check-in
+    const checkInDate = new Date();
+    const result = await pool.query(
+      'UPDATE registrations SET checked_in = true, checked_in_date = $1 WHERE id = $2 RETURNING *',
+      [checkInDate, id]
+    );
+    return result.rows[0] || null;
+  }
+
   // Deletar inscrição
   static async delete(id: string): Promise<boolean> {
     const result = await pool.query(

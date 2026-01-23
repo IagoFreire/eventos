@@ -15,7 +15,7 @@ interface PixPaymentProps {
 const PixPayment: React.FC<PixPaymentProps> = ({
   qrCode,
   qrCodeBase64,
-  ticketUrl,
+  ticketUrl: _ticketUrl,
   amount,
   onPaymentConfirmed,
   isTestMode = false,

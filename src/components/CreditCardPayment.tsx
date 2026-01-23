@@ -14,7 +14,7 @@ interface CreditCardPaymentProps {
 
 const CreditCardPayment: React.FC<CreditCardPaymentProps> = ({
   amount,
-  registrationId,
+  registrationId: _registrationId,
   onPaymentSuccess,
   onCancel,
 }) => {

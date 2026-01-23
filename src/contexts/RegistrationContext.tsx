@@ -19,7 +19,7 @@ interface RegistrationFormData {
 
 interface RegistrationContextType {
   formData: RegistrationFormData;
-  setFormData: (data: RegistrationFormData) => void;
+  setFormData: (data: RegistrationFormData | ((prev: RegistrationFormData) => RegistrationFormData)) => void;
   currentStep: number;
   setCurrentStep: (step: number) => void;
   registrationId: string | null;

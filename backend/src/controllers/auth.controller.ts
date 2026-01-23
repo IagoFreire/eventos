@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { UserModel } from '../models/user.model.js';
 import { AuthRequest } from '../middleware/auth.js';
 
@@ -17,11 +17,15 @@ export class AuthController {
       }
 
       // Gerar token JWT
-      const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
-        process.env.JWT_SECRET || '',
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-      );
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        res.status(500).json({ error: 'JWT_SECRET não configurado' });
+        return;
+      }
+
+      const payload = { id: user.id, email: user.email, role: user.role };
+      const options: SignOptions = { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any };
+      const token = jwt.sign(payload, jwtSecret, options);
 
       res.json({
         token,

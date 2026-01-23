@@ -15,6 +15,7 @@ import Confirmation from './pages/Confirmation';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
 import AdminSettings from './pages/AdminSettings';
+import CheckIn from './pages/CheckIn';
 import MeuIngresso from './pages/MeuIngresso';
 
 function AppContent() {
@@ -44,6 +45,14 @@ function AppContent() {
             element={
               <ProtectedRoute requireAdmin>
                 <AdminSettings />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/checkin" 
+            element={
+              <ProtectedRoute requireAdmin>
+                <CheckIn />
               </ProtectedRoute>
             } 
           />

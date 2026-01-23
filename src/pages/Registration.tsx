@@ -120,7 +120,7 @@ const Registration: React.FC = () => {
       const cepData = await searchCep(cleanCep);
       
       if (cepData) {
-        setFormData(prev => {
+        setFormData((prev) => {
           const updatedData = {
             ...prev,
             ...preserveData, // Preserva dados passados (como nome, email, etc)

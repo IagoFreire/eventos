@@ -15,6 +15,7 @@ import Confirmation from './pages/Confirmation';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
 import AdminSettings from './pages/AdminSettings';
+import MeuIngresso from './pages/MeuIngresso';
 
 function AppContent() {
   const location = useLocation();
@@ -28,6 +29,7 @@ function AppContent() {
           <Route path="/" element={<Home />} />
           <Route path="/inscricao" element={<Registration />} />
           <Route path="/confirmacao" element={<Confirmation />} />
+          <Route path="/meu-ingresso" element={<MeuIngresso />} />
           <Route path="/login" element={<Login />} />
           <Route 
             path="/admin" 

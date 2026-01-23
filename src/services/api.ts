@@ -78,6 +78,13 @@ export const checkIn = async (id: string): Promise<Registration> => {
   return response.data;
 };
 
+export const getRegistrationsByCpf = async (cpf: string): Promise<Registration[]> => {
+  const response = await api.get('/registrations/by-cpf', {
+    params: { cpf }
+  });
+  return response.data;
+};
+
 // Pagamento
 export const createPayment = async (paymentData: PaymentData): Promise<any> => {
   const response = await api.post('/payments', paymentData);

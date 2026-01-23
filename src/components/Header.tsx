@@ -33,6 +33,12 @@ const Header: React.FC = () => {
           >
             Início
           </Link>
+          <Link 
+            to="/meu-ingresso" 
+            className="text-gray-700 hover:text-[#B8860B] transition-colors"
+          >
+            Meu Ingresso
+          </Link>
           {isAuthenticated && user?.role === 'admin' && (
             <Link 
               to="/admin" 

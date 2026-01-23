@@ -136,6 +136,19 @@ export const mockApi = {
     return registrations;
   },
 
+  getRegistrationsByCpf: async (cpf: string): Promise<Registration[]> => {
+    await mockDelay();
+    
+    // Normaliza o CPF removendo formatação para comparação
+    const normalizedCpf = cpf.replace(/\D/g, '');
+    
+    // Retorna apenas inscrições aprovadas com o CPF informado (com ou sem formatação)
+    return registrations.filter(r => {
+      const regCpfNormalized = r.cpf.replace(/\D/g, '');
+      return regCpfNormalized === normalizedCpf && r.payment_status === 'approved';
+    });
+  },
+
   updateRegistration: async (id: string, data: Partial<Registration>): Promise<Registration> => {
     await mockDelay();
     

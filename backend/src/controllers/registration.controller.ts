@@ -141,4 +141,30 @@ export class RegistrationController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  // Buscar inscrições aprovadas por CPF (público)
+  static async getByCpf(req: Request, res: Response): Promise<void> {
+    try {
+      const { cpf } = req.query;
+      
+      if (!cpf) {
+        res.status(400).json({ error: 'CPF é obrigatório' });
+        return;
+      }
+
+      // Normaliza o CPF removendo formatação
+      const normalizedCpf = (cpf as string).replace(/\D/g, '');
+      
+      console.log('Buscando inscrições para CPF normalizado:', normalizedCpf);
+      
+      const registrations = await RegistrationModel.findApprovedByCpf(normalizedCpf);
+      
+      console.log(`Encontradas ${registrations.length} inscrições aprovadas para CPF ${normalizedCpf}`);
+      
+      res.json(registrations);
+    } catch (error: any) {
+      console.error('Erro ao buscar inscrições por CPF:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
 }

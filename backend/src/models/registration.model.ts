@@ -155,4 +155,20 @@ export class RegistrationModel {
     );
     return parseInt(result.rows[0].count);
   }
+
+  // Buscar inscrições aprovadas por CPF
+  static async findApprovedByCpf(cpf: string): Promise<Registration[]> {
+    // Normaliza o CPF removendo formatação para comparação
+    const normalizedCpf = cpf.replace(/\D/g, '');
+    
+    // Busca tanto com formatação quanto sem formatação
+    const result = await pool.query(
+      `SELECT * FROM registrations 
+       WHERE (REPLACE(REPLACE(REPLACE(cpf, '.', ''), '-', ''), ' ', '') = $1 OR cpf = $2)
+       AND payment_status = 'approved' 
+       ORDER BY created_at DESC`,
+      [normalizedCpf, cpf]
+    );
+    return result.rows;
+  }
 }

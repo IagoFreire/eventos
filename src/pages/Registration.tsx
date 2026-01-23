@@ -1,11 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useReactToPrint } from 'react-to-print';
 import { useRegistration } from '../contexts/RegistrationContext';
 import { useEvent } from '../contexts/EventContext';
 import { api } from '../services/apiSelector';
 import { ArrowLeft, ArrowRight, Check, User, Mail, Phone, Calendar, CheckCircle, Download, Printer, MapPin, Clock, QrCode, Home, Sparkles } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import PixPayment from '../components/PixPayment';
 import CreditCardPayment from '../components/CreditCardPayment';
 import { generateTestData } from '../utils/generateTestData';
@@ -342,12 +345,109 @@ const Registration: React.FC = () => {
     }
   };
 
+  const handlePrintReact = useReactToPrint({
+    contentRef: ticketRef,
+    documentTitle: `Ingresso - ${event.title} - ${formData.name}`,
+    pageStyle: `
+      @page {
+        size: A4;
+        margin: 20mm;
+      }
+      @media print {
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        .print-ticket .grid {
+          display: grid !important;
+        }
+        .print-ticket [class*="grid-cols-3"] {
+          grid-template-columns: 2fr 1fr !important;
+        }
+        .print-ticket [class*="col-span-2"] {
+          grid-column: span 1 !important;
+        }
+        .print-ticket .grid-cols-1 {
+          grid-template-columns: 2fr 1fr !important;
+        }
+      }
+    `,
+  });
+
   const handlePrint = () => {
-    window.print();
+    if (!ticketRef.current) {
+      toast.error('Ingresso não encontrado. Aguarde o carregamento.');
+      return;
+    }
+    handlePrintReact();
   };
 
-  const handleDownload = () => {
-    toast.info('Funcionalidade de download do ingresso em desenvolvimento!');
+  const handleDownload = async () => {
+    if (!ticketRef.current) {
+      toast.error('Erro ao gerar PDF. Tente novamente.');
+      return;
+    }
+
+    if (!registrationId) {
+      toast.error('ID de inscrição não encontrado.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Aguarda um pouco para garantir que o QR Code esteja renderizado
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Captura o elemento do ingresso como canvas
+      const canvas = await html2canvas(ticketRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        allowTaint: true,
+      });
+
+      // Calcula as dimensões do PDF
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      // Cria o PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      let position = 0;
+
+      // Adiciona a primeira página
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Adiciona páginas adicionais se necessário
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Gera o nome do arquivo
+      const sanitizedName = formData.name.split(' ')[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const sanitizedTitle = event.title.replace(/\s+/g, '-').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const fileName = `ingresso-${sanitizedTitle}-${sanitizedName}.pdf`;
+      
+      // Faz o download
+      pdf.save(fileName);
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFinish = () => {
@@ -394,7 +494,7 @@ const Registration: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen py-12 px-4">
+    <div className={`min-h-screen py-12 px-4 ${currentStep === 3 ? 'print-ticket-container' : ''}`}>
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -792,7 +892,7 @@ const Registration: React.FC = () => {
           )}
 
           {currentStep === 3 && (
-            <div>
+            <div className="print-ticket-container">
               {/* Success Message */}
               <div className="text-center mb-8 print:hidden">
                 <div className="w-20 h-20 bg-gradient-to-br from-[#D4AF37] to-[#B8860B] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -818,126 +918,113 @@ const Registration: React.FC = () => {
                 </button>
                 <button
                   onClick={handleDownload}
-                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white rounded-full hover:shadow-lg transition-all"
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white rounded-full hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Download className="w-5 h-5" />
-                  <span>Baixar Ingresso (PDF)</span>
+                  <span>{loading ? 'Gerando PDF...' : 'Baixar Ingresso (PDF)'}</span>
                 </button>
               </div>
 
               {/* Ticket */}
-              <div ref={ticketRef} className="bg-white rounded-2xl border-4 border-[#D4AF37] overflow-hidden shadow-2xl mb-8">
+              <div ref={ticketRef} className="print-ticket bg-white rounded-xl border-3 border-[#D4AF37] overflow-hidden shadow-xl mb-8 max-w-2xl mx-auto">
                 {/* Header do Ingresso */}
-                <div className="bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white p-6 text-center">
-                  <h3 className="text-2xl font-bold mb-2">{event.title}</h3>
+                <div className="bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white p-3 text-center">
+                  <h3 className="text-xl font-bold">{event.title}</h3>
                   <p className="text-sm opacity-90">Ingresso Digital</p>
                 </div>
 
                 {/* Corpo do Ingresso */}
-                <div className="p-8">
-                  <div className="grid md:grid-cols-2 gap-8 mb-8">
-                    {/* Informações do Participante */}
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                        <User className="w-5 h-5 text-[#B8860B]" />
-                        Participante
-                      </h4>
-                      <div className="space-y-3 text-gray-700">
+                <div className="p-4">
+                  {/* Layout compacto: Informações lado a lado */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    {/* Coluna 1: Dados do Participante */}
+                    <div className="md:col-span-2">
+                      <div className="space-y-2 text-gray-700">
                         <div>
                           <p className="text-sm text-gray-500">Nome:</p>
-                          <p className="font-medium">{formData.name}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">E-mail:</p>
-                          <p className="font-medium">{formData.email}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Telefone:</p>
-                          <p className="font-medium">{formData.phone}</p>
+                          <p className="font-medium text-sm">{formData.name}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">CPF:</p>
-                          <p className="font-medium">{formData.cpf}</p>
+                          <p className="font-medium text-sm">{formData.cpf}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">E-mail:</p>
+                          <p className="font-medium text-sm break-all">{formData.email}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Telefone:</p>
+                          <p className="font-medium text-sm">{formData.phone}</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Informações do Evento */}
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-[#B8860B]" />
-                        Detalhes do Evento
-                      </h4>
-                      <div className="space-y-3 text-gray-700">
-                        <div className="flex items-start gap-2">
-                          <Calendar className="w-5 h-5 text-[#B8860B] mt-0.5" />
-                          <div>
-                            <p className="text-sm text-gray-500">Data:</p>
-                            <p className="font-medium">{formatDate(event.date)}</p>
-                          </div>
+                    {/* Coluna 2: QR Code */}
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="w-40 h-40 bg-white rounded flex items-center justify-center border-2 border-[#E8DCC4] p-2 mb-1">
+                        {registrationId ? (
+                          <QRCodeSVG
+                            value={registrationId}
+                            size={150}
+                            level="H"
+                            includeMargin={false}
+                            fgColor="#B8860B"
+                            bgColor="#FFFFFF"
+                          />
+                        ) : (
+                          <QrCode className="w-16 h-16 text-[#B8860B]" />
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500 text-center leading-tight">
+                        Apresente na entrada
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Informações do Evento */}
+                  <div className="border-t border-[#E8DCC4] pt-3 mb-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-700">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-[#B8860B] flex-shrink-0" />
+                        <div>
+                          <p className="text-sm text-gray-500">Data:</p>
+                          <p className="font-medium text-sm">{formatDate(event.date)}</p>
                         </div>
-                        <div className="flex items-start gap-2">
-                          <Clock className="w-5 h-5 text-[#B8860B] mt-0.5" />
-                          <div>
-                            <p className="text-sm text-gray-500">Horário:</p>
-                            <p className="font-medium">09h00</p>
-                          </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-[#B8860B] flex-shrink-0" />
+                        <div>
+                          <p className="text-sm text-gray-500">Horário:</p>
+                          <p className="font-medium text-sm">09h00</p>
                         </div>
-                        <div className="flex items-start gap-2">
-                          <MapPin className="w-5 h-5 text-[#B8860B] mt-0.5" />
-                          <div>
-                            <p className="text-sm text-gray-500">Local:</p>
-                            <p className="font-medium">{event.location}</p>
-                          </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-[#B8860B] flex-shrink-0" />
+                        <div>
+                          <p className="text-sm text-gray-500">Local:</p>
+                          <p className="font-medium text-sm">{event.location}</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* QR Code e ID */}
-                  <div className="border-t-2 border-dashed border-[#E8DCC4] pt-8">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                      {/* QR Code */}
-                      <div className="flex flex-col items-center">
-                        <div className="w-32 h-32 bg-white rounded-lg flex items-center justify-center mb-2 border-2 border-[#E8DCC4] p-2">
-                          {registrationId ? (
-                            <QRCodeSVG
-                              value={registrationId}
-                              size={120}
-                              level="H"
-                              includeMargin={false}
-                              fgColor="#B8860B"
-                              bgColor="#FFFFFF"
-                            />
-                          ) : (
-                            <QrCode className="w-16 h-16 text-[#B8860B]" />
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 text-center">
-                          Apresente este QR Code<br />na entrada do evento
-                        </p>
-                      </div>
-
-                      {/* ID do Ingresso */}
-                      <div className="flex-1 text-center md:text-right">
-                        <p className="text-sm text-gray-500 mb-1">ID do Ingresso:</p>
-                        <p className="font-mono text-lg text-[#B8860B] font-bold break-all">
+                  {/* ID do Ingresso */}
+                  <div className="border-t border-[#E8DCC4] pt-2">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm text-gray-500 mb-0.5">ID do Ingresso:</p>
+                        <p className="font-mono text-sm text-[#B8860B] font-bold break-all">
                           {registrationId || 'N/A'}
                         </p>
-                        <p className="text-xs text-gray-500 mt-4">
-                          Emitido em: {formatDateTime(new Date().toISOString())}
-                        </p>
                       </div>
+                      <p className="text-sm text-gray-500">
+                        Emitido: {formatDateTime(new Date().toISOString())}
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Footer do Ingresso */}
-                <div className="bg-[#F5F5DC] px-8 py-4 border-t border-[#E8DCC4]">
-                  <p className="text-xs text-gray-600 text-center">
-                    ⚠️ Este ingresso é pessoal e intransferível. Apresente um documento de identidade na entrada.
-                  </p>
-                </div>
               </div>
 
               {/* Botão Finalizar */}

@@ -132,3 +132,75 @@
     animation: fadeIn 0.5s ease-out;
   }
 }
+
+/* Estilos para impressão */
+@media print {
+  @page {
+    margin: 0;
+    size: A4;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Oculta Header e Footer */
+  header,
+  .header,
+  footer,
+  .footer,
+  nav,
+  .nav {
+    display: none !important;
+  }
+
+  /* Oculta elementos com classe print:hidden */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Oculta ToastContainer */
+  .Toastify {
+    display: none !important;
+  }
+
+  /* Container do ingresso - ajusta layout para impressão */
+  .print-ticket-container {
+    margin: 0 !important;
+    padding: 20px !important;
+    background: white !important;
+    min-height: auto !important;
+  }
+
+  /* Oculta o container max-w-3xl e seus filhos exceto o ingresso */
+  .print-ticket-container .max-w-3xl > *:not(.print-ticket),
+  .print-ticket-container .max-w-3xl > div > *:not(.print-ticket) {
+    display: none !important;
+  }
+
+  /* Garante que o ingresso seja visível */
+  .print-ticket {
+    display: block !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin: 0 auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Remove sombras e efeitos na impressão */
+  .print-ticket * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}

@@ -6,7 +6,7 @@
  * - UI oficial do Mercado Pago
  * - Validação e tokenização automáticas
  */
-import React, { useState, useMemo, useRef, useCallback, memo } from 'react';
+import React, { useState, useMemo, useRef, useCallback, memo, useEffect } from 'react';
 import { CardPayment } from '@mercadopago/sdk-react';
 import { CreditCard, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -126,6 +126,26 @@ const CreditCardPayment: React.FC<CreditCardPaymentProps> = ({
     );
   }
 
+  // Detectar ambiente da chave pública
+  const isPublicKeyProduction = publicKey.startsWith('APP_USR-');
+  const isPublicKeyTest = publicKey.startsWith('TEST-');
+  
+  // Log do ambiente detectado
+  useEffect(() => {
+    console.log('🔑 Ambiente da chave pública detectado:', {
+      environment: isPublicKeyProduction ? 'PRODUÇÃO' : isPublicKeyTest ? 'TESTE' : 'DESCONHECIDO',
+      key_preview: publicKey.substring(0, 15) + '...',
+    });
+    
+    if (isPublicKeyProduction) {
+      console.log('⚠️ ATENÇÃO: Frontend usando chave pública de PRODUÇÃO');
+      console.log('   Certifique-se de que o backend também está usando access token de PRODUÇÃO');
+    } else if (isPublicKeyTest) {
+      console.log('ℹ️ Frontend usando chave pública de TESTE');
+      console.log('   Certifique-se de que o backend também está usando access token de TESTE');
+    }
+  }, [publicKey, isPublicKeyProduction, isPublicKeyTest]);
+
   const handleCardPaymentSubmit = useCallback(async (formData: any) => {
     // Prevenir múltiplas submissões usando ref (não causa re-render)
     if (isSubmittingRef.current) {
@@ -209,14 +229,61 @@ const CreditCardPayment: React.FC<CreditCardPaymentProps> = ({
       console.error('❌ Erro ao processar pagamento:', error);
 
       let errorMessage = 'Erro ao processar pagamento. Tente novamente.';
+      let errorDetails = '';
 
-      if (error.message) {
-        errorMessage = error.message;
-      } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
+      // Tratamento específico para erro de token não encontrado
+      if (error.response?.data?.code === 2006 || 
+          error.response?.data?.error === 'Token do cartão não encontrado' ||
+          error.message?.includes('Token not found')) {
+        errorMessage = '❌ Erro: Token do cartão não encontrado';
+        errorDetails = error.response?.data?.details || 
+          'O token do cartão não foi encontrado. Isso geralmente acontece quando há incompatibilidade entre credenciais de teste e produção.';
+        
+        console.error('🔴 ERRO DE TOKEN:', {
+          message: error.response?.data?.message,
+          details: error.response?.data?.details,
+          solution: error.response?.data?.solution,
+        });
+
+        // Mostrar mensagem detalhada
+        toast.error(
+          <div>
+            <div className="font-semibold">{errorMessage}</div>
+            {errorDetails && <div className="text-sm mt-1">{errorDetails}</div>}
+            {error.response?.data?.solution && (
+              <div className="text-xs mt-2 text-yellow-200">
+                💡 {error.response.data.solution}
+              </div>
+            )}
+          </div>,
+          { autoClose: 10000 }
+        );
+      } else {
+        // Tratamento genérico para outros erros
+        if (error.message) {
+          errorMessage = error.message;
+        } else if (error.response?.data?.error) {
+          errorMessage = error.response.data.error;
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+
+        if (error.response?.data?.details) {
+          errorDetails = error.response.data.details;
+        }
+
+        if (errorDetails) {
+          toast.error(
+            <div>
+              <div className="font-semibold">{errorMessage}</div>
+              <div className="text-sm mt-1">{errorDetails}</div>
+            </div>,
+            { autoClose: 8000 }
+          );
+        } else {
+          toast.error(errorMessage);
+        }
       }
-
-      toast.error(errorMessage);
       
       // Resetar estados imediatamente após erro para permitir nova tentativa
       resetPaymentState();

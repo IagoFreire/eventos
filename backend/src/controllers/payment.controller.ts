@@ -110,6 +110,34 @@ export class PaymentController {
           return;
         }
 
+        // Validar formato do token (tokens do Mercado Pago geralmente têm formato específico)
+        if (typeof token !== 'string' || token.length < 10) {
+          console.error('⚠️ Token do cartão com formato inválido:', token);
+          res.status(400).json({ 
+            error: 'Token do cartão inválido. Por favor, tente novamente.',
+            details: 'O token gerado não está no formato correto.'
+          });
+          return;
+        }
+
+        // Verificar compatibilidade de ambiente (teste vs produção)
+        const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
+        const isBackendProduction = !accessToken.startsWith('TEST-');
+        
+        console.log('💳 Processando pagamento com cartão:', {
+          payment_method_id,
+          installments: installments || 1,
+          has_token: !!token,
+          token_length: token.length,
+          token_preview: token.substring(0, 10) + '...',
+          backend_environment: isBackendProduction ? 'PRODUÇÃO' : 'TESTE',
+        });
+
+        // Aviso se detectar possível incompatibilidade
+        if (isBackendProduction) {
+          console.log('⚠️ Backend em PRODUÇÃO - certifique-se de que o frontend também está usando chave pública de PRODUÇÃO');
+        }
+
         paymentData.token = token;
         paymentData.installments = installments || 1;
 
@@ -117,12 +145,6 @@ export class PaymentController {
         if (issuer_id) {
           paymentData.issuer_id = issuer_id;
         }
-
-        console.log('💳 Processando pagamento com cartão:', {
-          payment_method_id,
-          installments: paymentData.installments,
-          has_token: !!token,
-        });
       }
 
       // Adicionar notification_url APENAS para PIX que precisa de confirmação automática
@@ -179,8 +201,51 @@ export class PaymentController {
 
       res.status(201).json(response);
     } catch (error: any) {
-      console.error('Erro ao criar pagamento:', error);
-      res.status(500).json({ error: error.message });
+      console.error('❌ Erro ao criar pagamento:', {
+        message: error.message,
+        error: error.error,
+        status: error.status,
+        cause: error.cause,
+      });
+
+      // Tratamento específico para erro de token não encontrado
+      if (error.error === 'bad_request' && error.cause && Array.isArray(error.cause)) {
+        const tokenError = error.cause.find((c: any) => c.code === 2006 || c.description?.includes('Token'));
+        
+        if (tokenError) {
+          const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
+          const isBackendProduction = !accessToken.startsWith('TEST-');
+          
+          console.error('🔴 ERRO: Token do cartão não encontrado no Mercado Pago');
+          console.error('🔍 Possíveis causas:');
+          console.error('   1. Token foi gerado com chave pública de TESTE, mas backend usa access token de PRODUÇÃO');
+          console.error('   2. Token foi gerado com chave pública de PRODUÇÃO, mas backend usa access token de TESTE');
+          console.error('   3. Token expirou (tokens do Mercado Pago expiram rapidamente)');
+          console.error('   4. Token inválido ou corrompido');
+          console.error(`   Backend está em: ${isBackendProduction ? 'PRODUÇÃO' : 'TESTE'}`);
+          
+          res.status(400).json({ 
+            error: 'Token do cartão não encontrado',
+            message: 'O token do cartão não foi encontrado no Mercado Pago. Isso geralmente acontece quando há incompatibilidade entre as credenciais de teste e produção.',
+            details: isBackendProduction 
+              ? 'Certifique-se de que o frontend está usando a chave pública de PRODUÇÃO (APP_USR-...) e não de teste (TEST-...).'
+              : 'Certifique-se de que o frontend está usando a chave pública de TESTE (TEST-...) e não de produção.',
+            solution: 'Verifique se VITE_MERCADO_PAGO_PUBLIC_KEY no frontend corresponde ao ambiente do MERCADOPAGO_ACCESS_TOKEN no backend.',
+            code: 2006
+          });
+          return;
+        }
+      }
+
+      // Tratamento genérico para outros erros
+      const statusCode = error.status || 500;
+      const errorMessage = error.message || 'Erro ao processar pagamento';
+      
+      res.status(statusCode).json({ 
+        error: errorMessage,
+        details: error.error || 'Erro desconhecido',
+        ...(error.cause && { cause: error.cause })
+      });
     }
   }
 

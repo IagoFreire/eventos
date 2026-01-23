@@ -9,7 +9,6 @@ import { api } from '../services/apiSelector';
 import { 
   ArrowLeft, 
   Save, 
-  LogOut, 
   Settings as SettingsIcon,
   Users,
   Plus,
@@ -155,14 +154,6 @@ const AdminSettings: React.FC = () => {
               <ArrowLeft className="w-5 h-5" />
               <span>Voltar para Inscrições</span>
             </button>
-            
-            <button
-              onClick={() => navigate('/login')}
-              className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-[#E8DCC4] rounded-lg text-gray-700 hover:bg-white/80 hover:border-[#D4AF37] transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Sair</span>
-            </button>
           </div>
 
           <div className="flex items-center gap-3 mb-4">
@@ -179,36 +170,39 @@ const AdminSettings: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab('event')}
-              className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-6 py-3 rounded-lg transition-colors ${
                 activeTab === 'event'
                   ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white'
                   : 'text-gray-700 hover:bg-[#F5F5DC]'
               }`}
+              title="Informações do Evento"
             >
-              <Calendar className="w-5 h-5" />
-              <span>Informações do Evento</span>
+              <Calendar className="w-5 h-5 md:w-5 md:h-5" />
+              <span className="hidden md:inline">Informações do Evento</span>
             </button>
             <button
               onClick={() => setActiveTab('church')}
-              className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-6 py-3 rounded-lg transition-colors ${
                 activeTab === 'church'
                   ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white'
                   : 'text-gray-700 hover:bg-[#F5F5DC]'
               }`}
+              title="Informações da Igreja"
             >
-              <Church className="w-5 h-5" />
-              <span>Informações da Igreja</span>
+              <Church className="w-5 h-5 md:w-5 md:h-5" />
+              <span className="hidden md:inline">Informações da Igreja</span>
             </button>
             <button
               onClick={() => setActiveTab('included')}
-              className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-6 py-3 rounded-lg transition-colors ${
                 activeTab === 'included'
                   ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white'
                   : 'text-gray-700 hover:bg-[#F5F5DC]'
               }`}
+              title="O que está incluído"
             >
-              <Users className="w-5 h-5" />
-              <span>O que está incluído</span>
+              <Users className="w-5 h-5 md:w-5 md:h-5" />
+              <span className="hidden md:inline">O que está incluído</span>
             </button>
           </div>
         </div>
@@ -437,13 +431,14 @@ const AdminSettings: React.FC = () => {
           {activeTab === 'included' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl text-gray-800">O que está incluído no evento</h2>
+                <h2 className="text-2xl text-gray-800 pl-4 md:pl-0">O que está incluído no evento</h2>
                 <button
                   onClick={handleAddIncludedItem}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white rounded-lg hover:shadow-lg transition-all"
+                  className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white rounded-lg hover:shadow-lg transition-all"
+                  title="Adicionar Item"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Adicionar Item</span>
+                  <Plus className="w-5 h-5" />
+                  <span className="hidden md:inline">Adicionar Item</span>
                 </button>
               </div>
 

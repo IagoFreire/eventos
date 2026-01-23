@@ -274,7 +274,7 @@ const MeuIngresso: React.FC = () => {
                 {/* Layout compacto: Informações lado a lado */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   {/* Coluna 1: Dados do Participante */}
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-2 order-2 md:order-1">
                     <div className="space-y-2 text-gray-700">
                       <div>
                         <p className="text-sm text-gray-500">Nome:</p>
@@ -296,7 +296,7 @@ const MeuIngresso: React.FC = () => {
                   </div>
 
                   {/* Coluna 2: QR Code */}
-                  <div className="flex flex-col items-center justify-center">
+                  <div className="flex flex-col items-center justify-center order-1 md:order-2">
                     <div className="w-40 h-40 bg-white rounded flex items-center justify-center border-2 border-[#E8DCC4] p-2 mb-1">
                       {selectedRegistration.id ? (
                         <QRCodeSVG

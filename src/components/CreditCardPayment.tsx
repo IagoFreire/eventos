@@ -379,7 +379,7 @@ const CreditCardPayment: React.FC<CreditCardPaymentProps> = ({
         </div>
 
         {/* Botões */}
-        <div className="flex gap-4 pt-4">
+        <div className="flex flex-col-reverse md:flex-row gap-4 pt-4">
           <button
             type="button"
             onClick={onCancel}

@@ -170,7 +170,7 @@ const Confirmation: React.FC = () => {
           <div className="p-8">
             <div className="grid md:grid-cols-2 gap-8 mb-8">
               {/* Left Column - Event Details */}
-              <div className="space-y-6">
+              <div className="space-y-6 order-2 md:order-1">
                 <div>
                   <h3 className="text-sm text-gray-500 mb-2">PARTICIPANTE</h3>
                   <p className="text-xl text-gray-800">{registration.name}</p>
@@ -209,7 +209,7 @@ const Confirmation: React.FC = () => {
               </div>
 
               {/* Right Column - QR Code and Ticket Info */}
-              <div className="flex flex-col items-center justify-center">
+              <div className="flex flex-col items-center justify-center order-1 md:order-2">
                 <div className="bg-white p-6 rounded-2xl border-2 border-[#E8DCC4] mb-4">
                   {/* QR Code Placeholder */}
                   <div className="w-48 h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center relative overflow-hidden">

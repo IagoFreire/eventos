@@ -811,9 +811,9 @@ const Registration: React.FC = () => {
                     <span>Participante:</span>
                     <span>{formData.name}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between gap-2">
                     <span>E-mail:</span>
-                    <span>{formData.email}</span>
+                    <span className="truncate max-w-[60%] md:max-w-none">{formData.email}</span>
                   </div>
                   <div className="flex justify-between border-t border-[#E8DCC4] pt-2 mt-2">
                     <span>Valor Total:</span>
@@ -874,7 +874,7 @@ const Registration: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col-reverse md:flex-row gap-4">
                 <button
                   onClick={handlePreviousStep}
                   disabled={loading}
@@ -909,7 +909,7 @@ const Registration: React.FC = () => {
                 isTestMode={true} // Sempre em modo teste para facilitar
               />
               
-              <div className="flex gap-4">
+              <div className="flex flex-col-reverse md:flex-row gap-4">
                 <button
                   onClick={() => setShowPixPayment(false)}
                   className="flex-1 border border-[#E8DCC4] text-gray-700 py-3 rounded-full hover:bg-white/50 transition-all"
@@ -988,7 +988,7 @@ const Registration: React.FC = () => {
                   {/* Layout compacto: Informações lado a lado */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     {/* Coluna 1: Dados do Participante */}
-                    <div className="md:col-span-2">
+                    <div className="md:col-span-2 order-2 md:order-1">
                       <div className="space-y-2 text-gray-700">
                         <div>
                           <p className="text-sm text-gray-500">Nome:</p>
@@ -1010,7 +1010,7 @@ const Registration: React.FC = () => {
                     </div>
 
                     {/* Coluna 2: QR Code */}
-                    <div className="flex flex-col items-center justify-center">
+                    <div className="flex flex-col items-center justify-center order-1 md:order-2">
                       <div className="w-40 h-40 bg-white rounded flex items-center justify-center border-2 border-[#E8DCC4] p-2 mb-1">
                         {registrationId ? (
                           <QRCodeSVG

@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import type { Registration } from '../types';
 import { api } from '../services/apiSelector';
-import { ArrowLeft, Search, Edit2, X, CheckCircle, Circle, User, LogOut, Trash2, Calendar, CreditCard, DollarSign, FileText, Mail, Phone, MapPin, Clock } from 'lucide-react';
+import { ArrowLeft, Search, Edit2, X, CheckCircle, Circle, User, Trash2, Calendar, CreditCard, DollarSign, FileText, Mail, Phone, MapPin, Clock } from 'lucide-react';
 import Loading from '../components/Loading';
 
 const Admin: React.FC = () => {
@@ -201,7 +201,7 @@ const Admin: React.FC = () => {
               <span>Voltar</span>
             </button>
             
-            <div className="flex gap-3">
+            <div className="hidden md:flex gap-3">
               <button
                 onClick={() => navigate('/admin/checkin')}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:shadow-lg transition-all"
@@ -216,14 +216,6 @@ const Admin: React.FC = () => {
                 <Edit2 className="w-4 h-4" />
                 <span>Configurações</span>
               </button>
-              
-              <button
-                onClick={() => navigate('/login')}
-                className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-[#E8DCC4] rounded-lg text-gray-700 hover:bg-white/80 hover:border-[#D4AF37] transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sair</span>
-              </button>
             </div>
           </div>
 
@@ -232,51 +224,51 @@ const Admin: React.FC = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-[#E8DCC4] shadow-lg">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-[#E8DCC4] shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 mb-1">Total de Inscritos</p>
-                <p className="text-3xl text-gray-800">{stats.total}</p>
+                <p className="text-xs md:text-sm text-gray-600 mb-1">Total de Inscritos</p>
+                <p className="text-2xl md:text-3xl text-gray-800 font-semibold">{stats.total}</p>
               </div>
-              <User className="w-10 h-10 text-[#B8860B]" />
+              <User className="w-8 h-8 md:w-10 md:h-10 text-[#B8860B]" />
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-[#E8DCC4] shadow-lg">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-[#E8DCC4] shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 mb-1">Pagamentos Aprovados</p>
-                <p className="text-3xl text-green-600">{stats.approved}</p>
+                <p className="text-xs md:text-sm text-gray-600 mb-1">Pagamentos Aprovados</p>
+                <p className="text-2xl md:text-3xl text-green-600 font-semibold">{stats.approved}</p>
               </div>
-              <CheckCircle className="w-10 h-10 text-green-600" />
+              <CheckCircle className="w-8 h-8 md:w-10 md:h-10 text-green-600" />
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-[#E8DCC4] shadow-lg">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-[#E8DCC4] shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 mb-1">Pagamentos Pendentes</p>
-                <p className="text-3xl text-orange-600">{stats.pending}</p>
+                <p className="text-xs md:text-sm text-gray-600 mb-1">Pagamentos Pendentes</p>
+                <p className="text-2xl md:text-3xl text-orange-600 font-semibold">{stats.pending}</p>
               </div>
-              <Circle className="w-10 h-10 text-orange-600" />
+              <Circle className="w-8 h-8 md:w-10 md:h-10 text-orange-600" />
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-[#E8DCC4] shadow-lg">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-[#E8DCC4] shadow-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 mb-1">Check-ins Realizados</p>
-                <p className="text-3xl text-green-600">{stats.checkedIn}</p>
+                <p className="text-xs md:text-sm text-gray-600 mb-1">Check-ins Realizados</p>
+                <p className="text-2xl md:text-3xl text-green-600 font-semibold">{stats.checkedIn}</p>
               </div>
-              <CheckCircle className="w-10 h-10 text-green-600" />
+              <CheckCircle className="w-8 h-8 md:w-10 md:h-10 text-green-600" />
             </div>
           </div>
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-[#E8DCC4] shadow-lg mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-[#E8DCC4] shadow-lg mb-6">
+          <div className="flex flex-col gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -284,12 +276,12 @@ const Admin: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nome, e-mail ou CPF..."
-                className="w-full pl-12 pr-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+                className="w-full pl-12 pr-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50 text-sm md:text-base"
               />
             </div>
             <div className="flex gap-2 flex-wrap">
               <button
-                className={`px-4 py-2 rounded-lg transition-colors ${
+                className={`px-3 md:px-4 py-2 rounded-lg transition-colors text-sm md:text-base ${
                   filterStatus === 'all' 
                     ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white' 
                     : 'bg-white border border-[#E8DCC4] text-gray-700 hover:border-[#D4AF37]'
@@ -299,7 +291,7 @@ const Admin: React.FC = () => {
                 Todos
               </button>
               <button
-                className={`px-4 py-2 rounded-lg transition-colors ${
+                className={`px-3 md:px-4 py-2 rounded-lg transition-colors text-sm md:text-base ${
                   filterStatus === 'approved' 
                     ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white' 
                     : 'bg-white border border-[#E8DCC4] text-gray-700 hover:border-[#D4AF37]'
@@ -309,7 +301,7 @@ const Admin: React.FC = () => {
                 Aprovados
               </button>
               <button
-                className={`px-4 py-2 rounded-lg transition-colors ${
+                className={`px-3 md:px-4 py-2 rounded-lg transition-colors text-sm md:text-base ${
                   filterStatus === 'pending' 
                     ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white' 
                     : 'bg-white border border-[#E8DCC4] text-gray-700 hover:border-[#D4AF37]'
@@ -319,7 +311,7 @@ const Admin: React.FC = () => {
                 Pendentes
               </button>
               <button
-                className={`px-4 py-2 rounded-lg transition-colors ${
+                className={`px-3 md:px-4 py-2 rounded-lg transition-colors text-sm md:text-base ${
                   filterStatus === 'checked_in' 
                     ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white' 
                     : 'bg-white border border-[#E8DCC4] text-gray-700 hover:border-[#D4AF37]'
@@ -332,62 +324,55 @@ const Admin: React.FC = () => {
           </div>
         </div>
 
-        {/* Registrations Table */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-[#E8DCC4] shadow-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-[#F5F5DC]">
-                <tr>
-                  <th className="px-6 py-4 text-left text-gray-700">Status</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Nome</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Telefone</th>
-                  <th className="px-6 py-4 text-left text-gray-700">CPF</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Pagamento</th>
-                  <th className="px-6 py-4 text-left text-gray-700">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRegistrations.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                      Nenhuma inscrição encontrada
-                    </td>
-                  </tr>
-                ) : (
-                  filteredRegistrations.map((registration) => (
-                    <tr 
-                      key={registration.id} 
-                      className="border-t border-[#E8DCC4] hover:bg-[#F5F5DC]/30 cursor-pointer transition-colors"
-                      onClick={(e) => handleRowClick(registration, e)}
-                    >
-                      <td className="px-6 py-4">
+        {/* Registrations - Cards on Mobile, Table on Desktop */}
+        {filteredRegistrations.length === 0 ? (
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-[#E8DCC4] shadow-lg p-12 text-center">
+            <p className="text-gray-500 text-lg">Nenhuma inscrição encontrada</p>
+          </div>
+        ) : (
+          <>
+            {/* Cards View - Mobile */}
+            <div className="md:hidden space-y-4">
+              {filteredRegistrations.map((registration) => (
+                <div
+                  key={registration.id}
+                  className="bg-white/80 backdrop-blur-sm rounded-xl border border-[#E8DCC4] shadow-lg p-4 space-y-3"
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    if (!target.closest('button')) {
+                      handleRowClick(registration, e);
+                    }
+                  }}
+                >
+                  {/* Header do Card */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-1">{registration.name}</h3>
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button
-                          onClick={() => handleCheckIn(registration)}
-                          title={registration.checked_in ? 'Clique para remover check-in' : 'Clique para fazer check-in'}
-                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-all hover:scale-105 ${
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCheckIn(registration);
+                          }}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-all ${
                             registration.checked_in
-                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                              : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-orange-100 text-orange-700'
                           }`}
                         >
                           {registration.checked_in ? (
                             <>
-                              <CheckCircle className="w-4 h-4" />
-                              <span>Feito</span>
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              <span>Check-in Feito</span>
                             </>
                           ) : (
                             <>
-                              <Circle className="w-4 h-4" />
-                              <span>Pendente</span>
+                              <Circle className="w-3.5 h-3.5" />
+                              <span>Check-in Pendente</span>
                             </>
                           )}
                         </button>
-                      </td>
-                      <td className="px-6 py-4 text-gray-800">{registration.name}</td>
-                      <td className="px-6 py-4 text-gray-600">{registration.phone}</td>
-                      <td className="px-6 py-4 text-gray-600">{registration.cpf}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-sm ${
+                        <span className={`px-2.5 py-1 rounded-full text-xs ${
                           registration.payment_status === 'approved' 
                             ? 'bg-green-100 text-green-700' 
                             : registration.payment_status === 'pending'
@@ -398,32 +383,133 @@ const Admin: React.FC = () => {
                           {registration.payment_status === 'pending' && '⏱ Pendente'}
                           {registration.payment_status === 'rejected' && '✗ Rejeitado'}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(registration)}
-                            className="p-2 bg-[#F5F5DC] text-[#B8860B] rounded-lg hover:bg-[#E8DCC4] transition-colors"
-                            title="Editar"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(registration)}
-                            className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                            title="Excluir"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(registration);
+                        }}
+                        className="p-2 bg-[#F5F5DC] text-[#B8860B] rounded-lg hover:bg-[#E8DCC4] transition-colors"
+                        title="Editar"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(registration);
+                        }}
+                        className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                        title="Excluir"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Informações do Card */}
+                  <div className="space-y-2 pt-2 border-t border-[#E8DCC4]">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-600">{registration.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-400">CPF:</span>
+                      <span className="text-gray-600">{registration.cpf}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Table View - Desktop */}
+            <div className="hidden md:block bg-white/80 backdrop-blur-sm rounded-xl border border-[#E8DCC4] shadow-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#F5F5DC]">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-gray-700">Status</th>
+                      <th className="px-6 py-4 text-left text-gray-700">Nome</th>
+                      <th className="px-6 py-4 text-left text-gray-700">Telefone</th>
+                      <th className="px-6 py-4 text-left text-gray-700">CPF</th>
+                      <th className="px-6 py-4 text-left text-gray-700">Pagamento</th>
+                      <th className="px-6 py-4 text-left text-gray-700">Ações</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                  </thead>
+                  <tbody>
+                    {filteredRegistrations.map((registration) => (
+                      <tr 
+                        key={registration.id} 
+                        className="border-t border-[#E8DCC4] hover:bg-[#F5F5DC]/30 cursor-pointer transition-colors"
+                        onClick={(e) => handleRowClick(registration, e)}
+                      >
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => handleCheckIn(registration)}
+                            title={registration.checked_in ? 'Clique para remover check-in' : 'Clique para fazer check-in'}
+                            className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-all hover:scale-105 ${
+                              registration.checked_in
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                            }`}
+                          >
+                            {registration.checked_in ? (
+                              <>
+                                <CheckCircle className="w-4 h-4" />
+                                <span>Feito</span>
+                              </>
+                            ) : (
+                              <>
+                                <Circle className="w-4 h-4" />
+                                <span>Pendente</span>
+                              </>
+                            )}
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 text-gray-800">{registration.name}</td>
+                        <td className="px-6 py-4 text-gray-600">{registration.phone}</td>
+                        <td className="px-6 py-4 text-gray-600">{registration.cpf}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-3 py-1 rounded-full text-sm ${
+                            registration.payment_status === 'approved' 
+                              ? 'bg-green-100 text-green-700' 
+                              : registration.payment_status === 'pending'
+                              ? 'bg-orange-100 text-orange-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}>
+                            {registration.payment_status === 'approved' && '✓ Aprovado'}
+                            {registration.payment_status === 'pending' && '⏱ Pendente'}
+                            {registration.payment_status === 'rejected' && '✗ Rejeitado'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEdit(registration)}
+                              className="p-2 bg-[#F5F5DC] text-[#B8860B] rounded-lg hover:bg-[#E8DCC4] transition-colors"
+                              title="Editar"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(registration)}
+                              className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                              title="Excluir"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Edit Modal */}

@@ -49,7 +49,7 @@ const CardPaymentWrapper = memo(({
   customization 
 }: {
   initialization: any;
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: any) => Promise<void>;
   onReady: () => void;
   onError: (error: any) => void;
   customization: any;

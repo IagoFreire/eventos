@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Event } from '../types';
 import { api } from '../services/apiSelector';
@@ -10,6 +10,7 @@ interface EventContextType {
   loadEvent: (eventId: string) => Promise<void>;
   loadEvents: () => Promise<void>;
   loading: boolean;
+  eventsLoaded: boolean;
 }
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
@@ -18,6 +19,12 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [events, setEvents] = useState<Event[]>([]);
   const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);
+  const [eventsLoaded, setEventsLoaded] = useState(false);
+
+  // Carregar eventos automaticamente ao montar
+  useEffect(() => {
+    loadEvents();
+  }, []);
 
   const loadEvent = async (eventId: string) => {
     setLoading(true);
@@ -32,10 +39,19 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const loadEvents = async () => {
+    if (eventsLoaded) return; // Evitar recarregar se já foram carregados
+    
     setLoading(true);
     try {
       const eventsList = await api.getEvents();
       setEvents(eventsList);
+      
+      // Se houver eventos e nenhum evento atual, definir o primeiro como atual
+      if (eventsList.length > 0 && !currentEvent) {
+        setCurrentEvent(eventsList[0]);
+      }
+      
+      setEventsLoaded(true);
     } catch (error) {
       console.error('Erro ao carregar eventos:', error);
     } finally {
@@ -52,6 +68,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         loadEvent,
         loadEvents,
         loading,
+        eventsLoaded,
       }}
     >
       {children}

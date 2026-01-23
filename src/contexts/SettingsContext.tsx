@@ -2,11 +2,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { EventSettings } from '../types';
 import { api } from '../services/apiSelector';
+import { useEvent } from './EventContext';
 
 interface SettingsContextType {
   settings: EventSettings | null;
   loading: boolean;
-  loadSettings: () => Promise<void>;
+  loadSettings: (eventId?: string) => Promise<void>;
   updateSettings: (eventId: string, newSettings: Partial<EventSettings>) => Promise<void>;
 }
 
@@ -15,16 +16,24 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<EventSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const eventId = '1';
+  const { currentEvent, eventsLoaded } = useEvent();
 
   useEffect(() => {
-    loadSettings();
-  }, []);
+    // Quando o evento atual for carregado, buscar suas configurações
+    if (eventsLoaded && currentEvent) {
+      loadSettings(currentEvent.id);
+    } else if (eventsLoaded) {
+      setLoading(false);
+    }
+  }, [currentEvent, eventsLoaded]);
 
-  const loadSettings = async () => {
+  const loadSettings = async (eventId?: string) => {
+    const idToUse = eventId || currentEvent?.id;
+    if (!idToUse) return;
+    
     setLoading(true);
     try {
-      const settingsData = await api.getEventSettings(eventId);
+      const settingsData = await api.getEventSettings(idToUse);
       setSettings(settingsData);
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);

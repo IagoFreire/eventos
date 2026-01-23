@@ -1,0 +1,108 @@
+import { Request, Response } from 'express';
+import { EventModel } from '../models/event.model.js';
+import { AuthRequest } from '../middleware/auth.js';
+
+export class EventController {
+  // Buscar todos os eventos
+  static async getAll(req: Request, res: Response): Promise<void> {
+    try {
+      const events = await EventModel.findAll();
+      res.json(events);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Buscar evento por ID
+  static async getById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const event = await EventModel.findById(id);
+      
+      if (!event) {
+        res.status(404).json({ error: 'Evento não encontrado' });
+        return;
+      }
+
+      res.json(event);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Criar novo evento
+  static async create(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const event = await EventModel.create(req.body);
+      res.status(201).json(event);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Atualizar evento
+  static async update(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const event = await EventModel.update(id, req.body);
+      
+      if (!event) {
+        res.status(404).json({ error: 'Evento não encontrado' });
+        return;
+      }
+
+      res.json(event);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Deletar evento
+  static async delete(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const deleted = await EventModel.delete(id);
+      
+      if (!deleted) {
+        res.status(404).json({ error: 'Evento não encontrado' });
+        return;
+      }
+
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Buscar configurações do evento
+  static async getSettings(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const settings = await EventModel.findSettings(id);
+      
+      if (!settings) {
+        res.status(404).json({ error: 'Configurações não encontradas' });
+        return;
+      }
+
+      res.json(settings);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Atualizar configurações do evento
+  static async updateSettings(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const settings = await EventModel.upsertSettings({
+        event_id: id,
+        ...req.body,
+      });
+
+      res.json(settings);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+}

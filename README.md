@@ -64,15 +64,22 @@ O sistema utiliza uma paleta de cores elegante e moderna:
 - **React Router DOM** - Gerenciamento de rotas
 - **Context API** - Gerenciamento de estado
 - **Axios** - Requisições HTTP
-- **Supabase Client** - Integração com banco de dados
 - **Tailwind CSS** - Framework CSS moderno e responsivo
 - **Lucide React** - Biblioteca de ícones moderna
 - **Class Variance Authority** - Gerenciamento de variantes de componentes
 
+### Backend
+- **Node.js** 18+ com TypeScript
+- **Express** - Framework web
+- **PostgreSQL** - Banco de dados relacional
+- **JWT** - Autenticação e autorização
+- **Bcrypt** - Hash de senhas
+- **Mercado Pago SDK** - Processamento de pagamentos
+
 ### Integrações
-- **Supabase** - Banco de dados Postgres
+- **PostgreSQL** - Banco de dados relacional
 - **Mercado Pago** - Processamento de pagamentos
-- **Backend Node.js** (preparado pelo usuário)
+- **JWT** - Sistema de autenticação seguro
 
 ## ✨ Atualização Visual (Janeiro 2026)
 
@@ -88,45 +95,75 @@ Para mais detalhes sobre a atualização, consulte [ATUALIZACAO_VISUAL.md](./ATU
 
 ## 📦 Instalação
 
-1. Clone o repositório
+### 🎯 Instalação Rápida com Backend Integrado
+
+**1. Clone o repositório**
 ```bash
 git clone [url-do-repositorio]
 cd eventos
 ```
 
-2. Instale as dependências
+**2. Instale as dependências do frontend**
 ```bash
 npm install
 ```
 
-3. Configure as variáveis de ambiente
+**3. Configure o backend**
 ```bash
-# Copie o arquivo de exemplo e configure suas credenciais
+cd backend
+npm install
 cp env.example .env
 ```
 
-Edite o arquivo `.env` com suas credenciais:
+Edite `backend/.env` com suas credenciais:
 ```env
-VITE_API_URL=http://localhost:3000/api
-VITE_SUPABASE_URL=sua_url_do_supabase
-VITE_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
-VITE_MERCADO_PAGO_PUBLIC_KEY=sua_chave_publica_do_mercado_pago
+PORT=3000
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=eventos
+DB_USER=postgres
+DB_PASSWORD=sua_senha
+JWT_SECRET=sua_chave_secreta_super_segura
+MERCADOPAGO_ACCESS_TOKEN=seu_token_mercado_pago
 ```
 
-4. Inicie o servidor de desenvolvimento
+**4. Configure o banco de dados**
 
-**Modo Online (Supabase):**
+```bash
+cd backend
+npm run migrate
+```
+
+**5. Inicie o sistema**
+
+Terminal 1 - Backend:
+```bash
+cd backend
+npm run dev
+```
+
+Terminal 2 - Frontend:
 ```bash
 npm run dev
 ```
 
-**Modo Offline (Mocks - sem necessidade de configuração):**
+🎉 **Pronto!** Acesse: http://localhost:5173
+
+**Credenciais padrão:**
+- Email: `admin@eventos.com`
+- Senha: `admin123`
+
+> 📚 Para guia detalhado, veja: [`INSTALACAO_BACKEND.md`](INSTALACAO_BACKEND.md)
+
+### 🔌 Modo Offline (Opcional - Sem Backend)
+
+Se preferir testar sem configurar o backend:
+
 ```bash
 npm run dev-offline
 ```
-> 💡 Use o modo offline para testar sem configurar Supabase!
-> 
-> Credenciais: `admin@igreja.com` / `admin123`
+
+Credenciais: `admin@igreja.com` / `admin123`
 
 ## 🏗️ Build e Deploy
 
@@ -218,27 +255,54 @@ src/
 └── main.tsx        # Entry point da aplicação
 ```
 
-## 🔐 Configuração do Backend
+## 🔐 Backend API
 
-O sistema espera que o backend Node.js forneça os seguintes endpoints:
+O backend está **totalmente implementado** e integrado! 🎉
 
-### Eventos
-- `GET /api/events` - Lista todos os eventos
-- `GET /api/events/:id` - Busca um evento específico
+### Estrutura do Backend
 
-### Inscrições
-- `POST /api/registrations` - Cria nova inscrição
-- `GET /api/registrations` - Lista inscrições (requer autenticação)
-- `PUT /api/registrations/:id` - Atualiza inscrição (requer autenticação)
-- `PATCH /api/registrations/:id/checkin` - Realiza check-in (requer autenticação)
+```
+backend/
+├── src/
+│   ├── config/          # Configurações (DB, Mercado Pago)
+│   ├── controllers/     # Lógica de negócio
+│   ├── models/          # Modelos de dados
+│   ├── routes/          # Rotas da API
+│   ├── middleware/      # Auth, validação, erros
+│   └── server.ts        # Servidor Express
+├── database/
+│   ├── schema.sql       # Estrutura do banco
+│   └── seed.sql         # Dados iniciais
+└── package.json
+```
 
-### Pagamentos
-- `POST /api/payments` - Cria novo pagamento
-- `GET /api/payments/:id` - Consulta status do pagamento
+### Endpoints da API
 
-### Autenticação
+**Autenticação**
 - `POST /api/auth/login` - Login de administrador
-- `GET /api/auth/verify` - Verifica token JWT
+- `GET /api/auth/verify` - Verificar token JWT
+- `POST /api/auth/register` - Criar novo admin (requer admin)
+
+**Eventos**
+- `GET /api/events` - Listar todos os eventos
+- `GET /api/events/:id` - Buscar evento específico
+- `POST /api/events` - Criar evento (admin)
+- `PUT /api/events/:id` - Atualizar evento (admin)
+- `GET /api/events/:id/settings` - Configurações do evento
+- `PUT /api/events/:id/settings` - Atualizar configurações (admin)
+
+**Inscrições**
+- `POST /api/registrations` - Criar inscrição
+- `GET /api/registrations` - Listar inscrições (admin)
+- `PUT /api/registrations/:id` - Atualizar inscrição (admin)
+- `PATCH /api/registrations/:id/checkin` - Check-in (admin)
+
+**Pagamentos**
+- `POST /api/payments` - Criar pagamento
+- `GET /api/payments/:id` - Status do pagamento
+- `POST /api/payments/webhook` - Webhook Mercado Pago
+
+Para documentação completa: [`backend/README.md`](backend/README.md)
 
 ## 🗄️ Estrutura do Banco de Dados (Supabase/Postgres)
 
@@ -375,6 +439,11 @@ Para contribuir com o projeto:
 
 ## 📚 Documentação Completa
 
+### 🔥 Documentação Backend (NOVO!)
+- 🚀 [`INSTALACAO_BACKEND.md`](INSTALACAO_BACKEND.md) - **Guia completo de instalação do backend**
+- 📖 [`backend/README.md`](backend/README.md) - Documentação técnica da API
+
+### 📁 Documentação Frontend
 Toda a documentação está organizada na pasta [`docs/`](docs/):
 
 - 📖 [`QUICKSTART.md`](docs/QUICKSTART.md) - Guia de início rápido
@@ -385,7 +454,6 @@ Toda a documentação está organizada na pasta [`docs/`](docs/):
 - ⌨️ [`COMANDOS.md`](docs/COMANDOS.md) - Referência rápida de comandos
 - 🎫 [`INGRESSO.md`](docs/INGRESSO.md) - Página de confirmação com ingresso
 - 📋 [`PROJECT_SUMMARY.md`](docs/PROJECT_SUMMARY.md) - Resumo do projeto
-- ✅ [`STATUS.md`](docs/STATUS.md) - Status e checklist do projeto
 
 ## 📞 Suporte
 

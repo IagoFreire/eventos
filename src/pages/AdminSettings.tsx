@@ -30,7 +30,7 @@ import Loading from '../components/Loading';
 const AdminSettings: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const { loadEvent } = useEvent();
+  const { loadEvent, currentEvent, eventsLoaded } = useEvent();
   const { updateSettings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,17 +42,23 @@ const AdminSettings: React.FC = () => {
   // Estados para EventSettings
   const [settings, setSettings] = useState<EventSettings | null>(null);
 
-  const eventId = '1';
-
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'admin') {
       navigate('/login');
       return;
     }
-    loadData();
   }, [isAuthenticated, user, navigate]);
 
-  const loadData = async () => {
+  useEffect(() => {
+    // Quando os eventos estiverem carregados e houver um evento atual
+    if (eventsLoaded && currentEvent) {
+      loadEventData(currentEvent.id);
+    } else if (eventsLoaded) {
+      setLoading(false);
+    }
+  }, [eventsLoaded, currentEvent]);
+
+  const loadEventData = async (eventId: string) => {
     setLoading(true);
     try {
       const [eventData, settingsData] = await Promise.all([
@@ -70,16 +76,16 @@ const AdminSettings: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!event || !settings) return;
+    if (!event || !settings || !currentEvent) return;
     
     setSaving(true);
     try {
       await Promise.all([
-        api.updateEvent(eventId, event),
-        updateSettings(eventId, settings) // Usa o contexto para atualizar
+        api.updateEvent(currentEvent.id, event),
+        updateSettings(currentEvent.id, settings) // Usa o contexto para atualizar
       ]);
       toast.success('Configurações salvas com sucesso!');
-      loadEvent(eventId); // Atualiza o contexto do evento
+      loadEvent(currentEvent.id); // Atualiza o contexto do evento
     } catch (error) {
       console.error('Erro ao salvar:', error);
       toast.error('Erro ao salvar configurações');

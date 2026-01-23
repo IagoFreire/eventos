@@ -7,14 +7,10 @@ import Loading from '../components/Loading';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { currentEvent, loadEvent, loading } = useEvent();
+  const { currentEvent, loading } = useEvent();
   const { settings, loading: loadingSettings } = useSettings();
-  
-  const eventId = '1';
 
-  useEffect(() => {
-    loadEvent(eventId);
-  }, []);
+  // Não precisa mais de useEffect! O EventContext já carrega automaticamente
 
   if (loading || loadingSettings) {
     return <Loading />;

@@ -56,8 +56,8 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <SettingsProvider>
-          <EventProvider>
+        <EventProvider>
+          <SettingsProvider>
             <RegistrationProvider>
               <AppContent />
               <ToastContainer
@@ -73,8 +73,8 @@ function App() {
                 theme="light"
               />
             </RegistrationProvider>
-          </EventProvider>
-        </SettingsProvider>
+          </SettingsProvider>
+        </EventProvider>
       </AuthProvider>
     </Router>
   );

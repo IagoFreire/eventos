@@ -104,6 +104,25 @@ export const generateRandomAddress = (): string => {
   return `${street}, ${number}, ${neighborhood}, ${city} - ${state}`;
 };
 
+// CEPs válidos conhecidos para teste
+const validCeps = [
+  '01310-100', // Avenida Paulista, São Paulo - SP
+  '20040-020', // Praça Mauá, Rio de Janeiro - RJ
+  '30130-010', // Praça Sete, Belo Horizonte - MG
+  '80020-310', // Rua XV de Novembro, Curitiba - PR
+  '90010-150', // Praça da Matriz, Porto Alegre - RS
+  '70040-020', // Esplanada dos Ministérios, Brasília - DF
+  '40020-000', // Pelourinho, Salvador - BA
+  '50010-000', // Recife Antigo, Recife - PE
+  '60060-100', // Centro, Fortaleza - CE
+  '69020-000', // Centro, Manaus - AM
+];
+
+// Função para gerar CEP válido aleatório
+export const generateRandomCep = (): string => {
+  return validCeps[Math.floor(Math.random() * validCeps.length)];
+};
+
 // Função principal para gerar todos os dados de teste
 export const generateTestData = () => {
   const name = generateRandomName();
@@ -111,6 +130,7 @@ export const generateTestData = () => {
   const email = generateRandomEmail(name);
   const phone = generateRandomPhone();
   const address = generateRandomAddress();
+  const cep = generateRandomCep();
   
   return {
     name,
@@ -118,5 +138,6 @@ export const generateTestData = () => {
     email,
     phone,
     address,
+    cep,
   };
 };

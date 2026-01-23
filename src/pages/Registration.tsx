@@ -5,10 +5,12 @@ import { useRegistration } from '../contexts/RegistrationContext';
 import { useEvent } from '../contexts/EventContext';
 import { api } from '../services/apiSelector';
 import { ArrowLeft, ArrowRight, Check, User, Mail, Phone, Calendar, CheckCircle, Download, Printer, MapPin, Clock, QrCode, Home, Sparkles } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import PixPayment from '../components/PixPayment';
 import CreditCardPayment from '../components/CreditCardPayment';
 import { generateTestData } from '../utils/generateTestData';
 import { formatPrice } from '../utils/formatPrice';
+import { searchCep, formatCep } from '../services/cep';
 
 const Registration: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ const Registration: React.FC = () => {
   const [showPixPayment, setShowPixPayment] = useState(false);
   const [showCreditCardPayment, setShowCreditCardPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card'>('pix');
+  const [loadingCep, setLoadingCep] = useState(false);
   const ticketRef = useRef<HTMLDivElement>(null);
 
   const event = currentEvent || {
@@ -34,24 +37,134 @@ const Registration: React.FC = () => {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
+    const newFormData = {
       ...formData,
       [e.target.name]: e.target.value,
+    };
+    
+    // Atualiza o endereço completo automaticamente quando campos de endereço mudam
+    if (['street', 'number', 'complement', 'neighborhood', 'city', 'state', 'cep'].includes(e.target.name)) {
+      const parts: string[] = [];
+      if (newFormData.street) parts.push(newFormData.street);
+      if (newFormData.number) parts.push(`nº ${newFormData.number}`);
+      if (newFormData.complement) parts.push(newFormData.complement);
+      if (newFormData.neighborhood) parts.push(newFormData.neighborhood);
+      if (newFormData.city) parts.push(newFormData.city);
+      if (newFormData.state) parts.push(newFormData.state);
+      if (newFormData.cep) parts.push(`CEP: ${newFormData.cep}`);
+      newFormData.address = parts.length > 0 ? parts.join(', ') : '';
+    }
+    
+    setFormData(newFormData);
+  };
+
+  // Função para buscar CEP
+  const handleCepSearch = async (cep: string, preserveData?: Partial<typeof formData>) => {
+    const cleanCep = cep.replace(/\D/g, '');
+    
+    // Só busca se tiver 8 dígitos
+    if (cleanCep.length !== 8) {
+      return;
+    }
+
+    setLoadingCep(true);
+    try {
+      const cepData = await searchCep(cleanCep);
+      
+      if (cepData) {
+        setFormData(prev => {
+          const updatedData = {
+            ...prev,
+            ...preserveData, // Preserva dados passados (como nome, email, etc)
+            cep: formatCep(cleanCep),
+            street: cepData.logradouro || '',
+            neighborhood: cepData.bairro || '',
+            city: cepData.localidade || '',
+            state: cepData.uf || '',
+            complement: cepData.complemento || '',
+          };
+          
+          // Atualiza o endereço completo
+          const parts: string[] = [];
+          if (updatedData.street) parts.push(updatedData.street);
+          if (updatedData.number) parts.push(`nº ${updatedData.number}`);
+          if (updatedData.complement) parts.push(updatedData.complement);
+          if (updatedData.neighborhood) parts.push(updatedData.neighborhood);
+          if (updatedData.city) parts.push(updatedData.city);
+          if (updatedData.state) parts.push(updatedData.state);
+          if (updatedData.cep) parts.push(`CEP: ${updatedData.cep}`);
+          updatedData.address = parts.length > 0 ? parts.join(', ') : '';
+          
+          return updatedData;
+        });
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao buscar CEP', { autoClose: 3000 });
+    } finally {
+      setLoadingCep(false);
+    }
+  };
+
+  // Função para formatar CEP enquanto digita
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCep(e.target.value);
+    setFormData({
+      ...formData,
+      cep: formatted,
     });
+
+    // Busca automaticamente quando tiver 8 dígitos
+    const cleanCep = formatted.replace(/\D/g, '');
+    if (cleanCep.length === 8) {
+      handleCepSearch(cleanCep);
+    }
+  };
+
+  // Função para combinar campos de endereço em um endereço completo
+  const buildFullAddress = (): string => {
+    const parts: string[] = [];
+    
+    if (formData.street) parts.push(formData.street);
+    if (formData.number) parts.push(`nº ${formData.number}`);
+    if (formData.complement) parts.push(formData.complement);
+    if (formData.neighborhood) parts.push(formData.neighborhood);
+    if (formData.city) parts.push(formData.city);
+    if (formData.state) parts.push(formData.state);
+    if (formData.cep) parts.push(`CEP: ${formData.cep}`);
+    
+    return parts.length > 0 ? parts.join(', ') : formData.address || '';
   };
 
   // Função para preencher dados de teste
-  const handleFillTestData = () => {
+  const handleFillTestData = async () => {
     const testData = generateTestData();
-    setFormData({
-      ...formData,
+    const randomNumber = Math.floor(1 + Math.random() * 9999);
+    
+    // Preenche os dados básicos primeiro
+    const basicData = {
       name: testData.name,
       email: testData.email,
       phone: testData.phone,
       cpf: testData.cpf,
-      address: testData.address,
+      cep: testData.cep,
+      number: randomNumber.toString(),
+    };
+    
+    setFormData({
+      ...formData,
+      ...basicData,
     });
-    toast.success('✅ Dados de teste preenchidos!', { autoClose: 2000 });
+    
+    // Busca o CEP automaticamente para preencher os campos de endereço
+    // Passa os dados básicos para preservá-los durante a busca
+    if (testData.cep) {
+      try {
+        await handleCepSearch(testData.cep.replace(/\D/g, ''), basicData);
+      } catch (err) {
+        // Se falhar a busca, apenas mostra o CEP preenchido
+        console.warn('Erro ao buscar CEP:', err);
+      }
+    }
   };
 
   const validateStep1 = () => {
@@ -77,13 +190,16 @@ const Registration: React.FC = () => {
         setError(''); // Limpar erro anterior
         
         try {
+          // Combina os campos de endereço antes de enviar
+          const fullAddress = buildFullAddress();
+          
           const registration = await api.createRegistration({
             ...formData,
+            address: fullAddress || formData.address,
             event_id: event.id,
           });
           setRegistrationId(registration.id);
           setCurrentStep(2);
-          toast.success('✅ Dados salvos! Prossiga para o pagamento.');
         } catch (err: any) {
           console.error('❌ Erro ao criar inscrição:', err);
           
@@ -166,7 +282,6 @@ const Registration: React.FC = () => {
       } else {
         // Se não tiver PIX (modo simulado), avança direto
         setCurrentStep(3);
-        toast.success('✅ Pagamento processado com sucesso!');
       }
     } catch (err: any) {
       console.error('❌ Erro ao processar pagamento:', err);
@@ -216,7 +331,6 @@ const Registration: React.FC = () => {
       });
       
       setCurrentStep(3);
-      toast.success('✅ Pagamento confirmado!');
     } catch (error: any) {
       console.error('❌ Erro ao confirmar pagamento:', error);
       
@@ -245,6 +359,13 @@ const Registration: React.FC = () => {
       phone: '',
       cpf: '',
       address: '',
+      cep: '',
+      street: '',
+      number: '',
+      complement: '',
+      neighborhood: '',
+      city: '',
+      state: '',
       event_id: '',
     });
     setRegistrationId(null);
@@ -414,16 +535,111 @@ const Registration: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-gray-700 mb-2">Endereço Completo</label>
-                <textarea
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
-                  placeholder="Rua, número, bairro, cidade, estado (opcional)"
-                  rows={3}
-                />
+              {/* Seção de Endereço */}
+              <div className="border-t border-[#E8DCC4] pt-6 mt-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-[#B8860B]" />
+                  Endereço
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-gray-700 mb-2">CEP</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        name="cep"
+                        value={formData.cep || ''}
+                        onChange={handleCepChange}
+                        className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+                        placeholder="00000-000"
+                        maxLength={9}
+                      />
+                      {loadingCep && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#D4AF37]"></div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Digite o CEP para preencher automaticamente</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-gray-700 mb-2">Rua/Logradouro</label>
+                    <input
+                      type="text"
+                      name="street"
+                      value={formData.street || ''}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+                      placeholder="Nome da rua"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 mb-2">Número</label>
+                    <input
+                      type="text"
+                      name="number"
+                      value={formData.number || ''}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+                      placeholder="123"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-gray-700 mb-2">Complemento</label>
+                    <input
+                      type="text"
+                      name="complement"
+                      value={formData.complement || ''}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+                      placeholder="Apto, bloco, etc. (opcional)"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 mb-2">Bairro</label>
+                    <input
+                      type="text"
+                      name="neighborhood"
+                      value={formData.neighborhood || ''}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+                      placeholder="Nome do bairro"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-gray-700 mb-2">Cidade</label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={formData.city || ''}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+                      placeholder="Nome da cidade"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 mb-2">Estado (UF)</label>
+                    <input
+                      type="text"
+                      name="state"
+                      value={formData.state || ''}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+                      placeholder="SP"
+                      maxLength={2}
+                    />
+                  </div>
+                </div>
               </div>
 
               <button
@@ -681,10 +897,21 @@ const Registration: React.FC = () => {
                   {/* QR Code e ID */}
                   <div className="border-t-2 border-dashed border-[#E8DCC4] pt-8">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                      {/* QR Code Placeholder */}
+                      {/* QR Code */}
                       <div className="flex flex-col items-center">
-                        <div className="w-32 h-32 bg-[#F5F5DC] rounded-lg flex items-center justify-center mb-2 border-2 border-[#E8DCC4]">
-                          <QrCode className="w-16 h-16 text-[#B8860B]" />
+                        <div className="w-32 h-32 bg-white rounded-lg flex items-center justify-center mb-2 border-2 border-[#E8DCC4] p-2">
+                          {registrationId ? (
+                            <QRCodeSVG
+                              value={registrationId}
+                              size={120}
+                              level="H"
+                              includeMargin={false}
+                              fgColor="#B8860B"
+                              bgColor="#FFFFFF"
+                            />
+                          ) : (
+                            <QrCode className="w-16 h-16 text-[#B8860B]" />
+                          )}
                         </div>
                         <p className="text-xs text-gray-500 text-center">
                           Apresente este QR Code<br />na entrada do evento
@@ -694,8 +921,8 @@ const Registration: React.FC = () => {
                       {/* ID do Ingresso */}
                       <div className="flex-1 text-center md:text-right">
                         <p className="text-sm text-gray-500 mb-1">ID do Ingresso:</p>
-                        <p className="font-mono text-lg text-[#B8860B] font-bold">
-                          {registrationId ? registrationId.split('-')[0].toUpperCase() : 'N/A'}
+                        <p className="font-mono text-lg text-[#B8860B] font-bold break-all">
+                          {registrationId || 'N/A'}
                         </p>
                         <p className="text-xs text-gray-500 mt-4">
                           Emitido em: {formatDateTime(new Date().toISOString())}

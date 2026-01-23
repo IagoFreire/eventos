@@ -756,8 +756,8 @@ const Admin: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600 mb-1">ID da Inscrição</p>
-                    <p className="text-gray-800 font-medium font-mono text-sm">
-                      {selectedDetailsRegistration.id.split('-')[0].toUpperCase()}
+                    <p className="text-gray-800 font-medium font-mono text-sm break-all">
+                      {selectedDetailsRegistration.id}
                     </p>
                   </div>
                   <div>

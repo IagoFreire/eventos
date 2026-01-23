@@ -149,6 +149,19 @@ export const mockApi = {
     });
   },
 
+  getPendingRegistrationByEmail: async (email: string, eventId: string): Promise<Registration | null> => {
+    await mockDelay();
+    
+    // Busca inscrição pendente por email e evento
+    const registration = registrations.find(
+      r => r.email.toLowerCase() === email.toLowerCase() && 
+           r.event_id === eventId && 
+           r.payment_status === 'pending'
+    );
+    
+    return registration || null;
+  },
+
   updateRegistration: async (id: string, data: Partial<Registration>): Promise<Registration> => {
     await mockDelay();
     

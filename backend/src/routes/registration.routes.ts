@@ -19,6 +19,7 @@ const registrationValidation = [
 // Rotas públicas
 router.post('/', registrationValidation, validate, RegistrationController.create);
 router.get('/by-cpf', RegistrationController.getByCpf);
+router.get('/pending-by-email', RegistrationController.getPendingByEmail);
 
 // Rotas protegidas (admin apenas)
 router.get('/', authenticateToken, requireAdmin, RegistrationController.getAll);

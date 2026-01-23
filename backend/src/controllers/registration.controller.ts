@@ -167,4 +167,31 @@ export class RegistrationController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  // Buscar inscrição pendente por email e evento (público)
+  static async getPendingByEmail(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, event_id } = req.query;
+      
+      if (!email || !event_id) {
+        res.status(400).json({ error: 'Email e event_id são obrigatórios' });
+        return;
+      }
+
+      const registration = await RegistrationModel.findPendingByEmailAndEvent(
+        email as string,
+        event_id as string
+      );
+      
+      if (!registration) {
+        res.status(404).json({ error: 'Nenhuma inscrição pendente encontrada' });
+        return;
+      }
+
+      res.json(registration);
+    } catch (error: any) {
+      console.error('Erro ao buscar inscrição pendente:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
 }

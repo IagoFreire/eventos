@@ -171,4 +171,13 @@ export class RegistrationModel {
     );
     return result.rows;
   }
+
+  // Buscar inscrição pendente por email e evento
+  static async findPendingByEmailAndEvent(email: string, eventId: string): Promise<Registration | null> {
+    const result = await pool.query(
+      "SELECT * FROM registrations WHERE email = $1 AND event_id = $2 AND payment_status = 'pending' ORDER BY created_at DESC LIMIT 1",
+      [email, eventId]
+    );
+    return result.rows[0] || null;
+  }
 }

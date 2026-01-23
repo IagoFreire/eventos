@@ -61,6 +61,51 @@ const Registration: React.FC = () => {
     setFormData(newFormData);
   };
 
+  // Função para buscar inscrição pendente quando o email for digitado
+  const handleEmailBlur = async () => {
+    const email = formData.email.trim();
+    
+    // Valida formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return;
+    }
+
+    // Só busca se não tiver nome preenchido (indicando que é uma nova inscrição)
+    if (formData.name) {
+      return;
+    }
+
+    setLoadingCep(true);
+    try {
+      const pendingRegistration = await api.getPendingRegistrationByEmail(email, event.id);
+      
+      if (pendingRegistration) {
+        // Preenche os dados da inscrição pendente
+        setFormData({
+          ...formData,
+          name: pendingRegistration.name,
+          email: pendingRegistration.email,
+          phone: pendingRegistration.phone,
+          cpf: pendingRegistration.cpf,
+          address: pendingRegistration.address || '',
+        });
+        
+        // Se tiver registration ID, atualiza
+        if (pendingRegistration.id) {
+          setRegistrationId(pendingRegistration.id);
+        }
+        
+        toast.info('Inscrição pendente encontrada! Dados preenchidos automaticamente.');
+      }
+    } catch (error: any) {
+      // Ignora erros silenciosamente - não é um problema se não encontrar
+      console.log('Nenhuma inscrição pendente encontrada para este email');
+    } finally {
+      setLoadingCep(false);
+    }
+  };
+
   // Função para buscar CEP
   const handleCepSearch = async (cep: string, preserveData?: Partial<typeof formData>) => {
     const cleanCep = cep.replace(/\D/g, '');
@@ -580,6 +625,25 @@ const Registration: React.FC = () => {
               
               <div>
                 <label className="block text-gray-700 mb-2">
+                  <Mail className="w-4 h-4 inline mr-2" />
+                  E-mail *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  onBlur={handleEmailBlur}
+                  className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+                  placeholder="seu@email.com"
+                />
+                {loadingCep && (
+                  <p className="text-xs text-gray-500 mt-1">Buscando inscrição pendente...</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-gray-700 mb-2">
                   <User className="w-4 h-4 inline mr-2" />
                   Nome Completo *
                 </label>
@@ -590,21 +654,6 @@ const Registration: React.FC = () => {
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
                   placeholder="Digite seu nome completo"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 mb-2">
-                  <Mail className="w-4 h-4 inline mr-2" />
-                  E-mail *
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
-                  placeholder="seu@email.com"
                 />
               </div>
 

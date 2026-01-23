@@ -85,6 +85,20 @@ export const getRegistrationsByCpf = async (cpf: string): Promise<Registration[]
   return response.data;
 };
 
+export const getPendingRegistrationByEmail = async (email: string, eventId: string): Promise<Registration | null> => {
+  try {
+    const response = await api.get('/registrations/pending-by-email', {
+      params: { email, event_id: eventId }
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+};
+
 // Pagamento
 export const createPayment = async (paymentData: PaymentData): Promise<any> => {
   const response = await api.post('/payments', paymentData);

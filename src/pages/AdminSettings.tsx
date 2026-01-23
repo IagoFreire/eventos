@@ -9,7 +9,6 @@ import { api } from '../services/apiSelector';
 import { 
   ArrowLeft, 
   Save, 
-  User, 
   LogOut, 
   Settings as SettingsIcon,
   Users,
@@ -31,7 +30,7 @@ import Loading from '../components/Loading';
 const AdminSettings: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const { currentEvent, loadEvent } = useEvent();
+  const { loadEvent } = useEvent();
   const { updateSettings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

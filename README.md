@@ -114,9 +114,82 @@ VITE_MERCADO_PAGO_PUBLIC_KEY=sua_chave_publica_do_mercado_pago
 ```
 
 4. Inicie o servidor de desenvolvimento
+
+**Modo Online (Supabase):**
 ```bash
 npm run dev
 ```
+
+**Modo Offline (Mocks - sem necessidade de configuração):**
+```bash
+npm run dev-offline
+```
+> 💡 Use o modo offline para testar sem configurar Supabase!
+> 
+> Credenciais: `admin@igreja.com` / `admin123`
+
+## 🏗️ Build e Deploy
+
+O sistema oferece duas opções de build:
+
+### 🌐 Build ONLINE (Produção com Supabase)
+```bash
+# Usando npm
+npm run build:online
+
+# Ou usando o script interativo (Windows)
+.\build.bat
+# Escolha opção 1
+
+# PowerShell
+.\build.ps1
+# Escolha opção 1
+```
+Esta versão usa:
+- ✅ Banco de dados Supabase (real)
+- ✅ Autenticação real
+- ✅ Integração com Mercado Pago
+- ✅ Dados persistentes
+
+### 🔌 Build OFFLINE (Demonstração com Mocks)
+```bash
+# Usando npm
+npm run build:offline
+
+# Ou usando o script interativo (Windows)
+.\build.bat
+# Escolha opção 2
+
+# PowerShell
+.\build.ps1
+# Escolha opção 2
+```
+Esta versão usa:
+- ✅ Dados mockados (simulados)
+- ✅ Funciona sem internet
+- ✅ Perfeito para demonstrações
+- ✅ Não precisa configurar Supabase
+
+**Credenciais do modo offline:**
+- Email: `admin@igreja.com`
+- Senha: `admin123`
+
+### 📤 Deploy
+
+Após o build, os arquivos estarão na pasta `dist/`. Você pode:
+
+1. **Nginx** (como configurado):
+   ```bash
+   # Copie os arquivos para a pasta do nginx
+   # Configure o nginx.conf apontando para dist/
+   # Recarregue o nginx
+   nginx -s reload
+   ```
+
+2. **Outros servidores**:
+   - Vercel: `vercel deploy`
+   - Netlify: `netlify deploy --prod`
+   - GitHub Pages: Configure o workflow
 
 ## 🗂️ Estrutura do Projeto
 

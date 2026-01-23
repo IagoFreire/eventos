@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useEvent } from '../contexts/EventContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { MapPin, Calendar, Clock, DollarSign, Users, ChevronRight } from 'lucide-react';
-import type { EventSettings } from '../types';
 import Loading from '../components/Loading';
 
 const Home: React.FC = () => {

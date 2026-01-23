@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { useRegistration } from '../contexts/RegistrationContext';
 import { useEvent } from '../contexts/EventContext';
 import { api } from '../services/apiSelector';
-import { ArrowLeft, ArrowRight, Check, User, Mail, Phone, CreditCard, Calendar, CheckCircle, Download, Printer, MapPin, Clock, QrCode, Home } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, User, Mail, Phone, Calendar, CheckCircle, Download, Printer, MapPin, Clock, QrCode, Home } from 'lucide-react';
 
 const Registration: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +18,11 @@ const Registration: React.FC = () => {
     id: '1',
     title: 'Retiro Espiritual 2026',
     price: 350.00,
+    date: '2026-03-15T09:00:00',
+    location: 'Centro de Retiros Nova Vida',
+    description: '',
+    image_url: '',
+    max_participants: 100,
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

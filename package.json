@@ -7,8 +7,11 @@
     "dev": "vite",
     "dev-offline": "cross-env VITE_OFFLINE_MODE=true vite",
     "build": "tsc -b && vite build",
+    "build:online": "tsc -b && vite build",
+    "build:offline": "cross-env VITE_OFFLINE_MODE=true tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:offline": "cross-env VITE_OFFLINE_MODE=true vite preview"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",

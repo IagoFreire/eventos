@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import type { Registration } from '../types';
 import { api } from '../services/apiSelector';
-import { ArrowLeft, Search, Edit2, Save, X, CheckCircle, Circle, Trash2, User, LogOut } from 'lucide-react';
+import { ArrowLeft, Search, Edit2, X, CheckCircle, Circle, User, LogOut } from 'lucide-react';
 import Loading from '../components/Loading';
 
 const Admin: React.FC = () => {

@@ -337,6 +337,39 @@ const Admin: React.FC = () => {
     });
   };
 
+  // Função para formatar data/hora de forma mais legível no mobile
+  const formatDateTimeMobile = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Verificar se é hoje
+    const isToday = date.toDateString() === today.toDateString();
+    // Verificar se é ontem
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+    
+    const time = date.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/Sao_Paulo'
+    });
+    
+    if (isToday) {
+      return `Hoje às ${time}`;
+    } else if (isYesterday) {
+      return `Ontem às ${time}`;
+    } else {
+      const dateFormatted = date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'short',
+        year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined,
+        timeZone: 'America/Sao_Paulo'
+      });
+      return `${dateFormatted} às ${time}`;
+    }
+  };
+
   if (loading) {
     return <Loading />;
   }
@@ -567,20 +600,22 @@ const Admin: React.FC = () => {
                   </div>
 
                   {/* Informações do Card */}
-                  <div className="space-y-2 pt-2 border-t border-[#E8DCC4]">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{registration.phone}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-400">CPF:</span>
-                      <span className="text-gray-600">{registration.cpf}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">
-                        {formatDateTime(registration.created_at)}
-                      </span>
+                  <div className="pt-2 border-t border-[#E8DCC4]">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-600">{registration.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400">CPF:</span>
+                        <span className="text-gray-600">{registration.cpf}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-600">
+                          {formatDateTimeMobile(registration.created_at)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

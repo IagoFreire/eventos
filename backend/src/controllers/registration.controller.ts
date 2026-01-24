@@ -47,15 +47,33 @@ export class RegistrationController {
       // Verificar se já existe inscrição com esse CPF para o evento
       const existingByCpf = await RegistrationModel.findByCpfAndEvent(cpf, event_id);
       if (existingByCpf) {
-        res.status(400).json({ error: 'CPF já inscrito neste evento' });
-        return;
+        // Se a inscrição existente está pendente, permitir sobrescrever (deletar a antiga)
+        if (existingByCpf.payment_status === 'pending') {
+          console.log(`🔄 Sobrescrevendo inscrição pendente para CPF ${cpf} no evento ${event_id}`);
+          await RegistrationModel.delete(existingByCpf.id);
+        } else {
+          // Se está aprovada ou rejeitada, não permitir sobrescrever
+          res.status(400).json({ 
+            error: 'CPF já inscrito neste evento com pagamento processado. Não é possível sobrescrever.' 
+          });
+          return;
+        }
       }
 
       // Verificar se já existe inscrição com esse email para o evento
       const existingByEmail = await RegistrationModel.findByEmailAndEvent(email, event_id);
       if (existingByEmail) {
-        res.status(400).json({ error: 'Email já inscrito neste evento' });
-        return;
+        // Se a inscrição existente está pendente, permitir sobrescrever (deletar a antiga)
+        if (existingByEmail.payment_status === 'pending') {
+          console.log(`🔄 Sobrescrevendo inscrição pendente para email ${email} no evento ${event_id}`);
+          await RegistrationModel.delete(existingByEmail.id);
+        } else {
+          // Se está aprovada ou rejeitada, não permitir sobrescrever
+          res.status(400).json({ 
+            error: 'Email já inscrito neste evento com pagamento processado. Não é possível sobrescrever.' 
+          });
+          return;
+        }
       }
 
       // Verificar limite de participantes

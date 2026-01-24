@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import type { Registration } from '../types';
 import { api } from '../services/apiSelector';
-import { ArrowLeft, Search, Edit2, X, CheckCircle, Circle, User, Trash2, Calendar, CreditCard, DollarSign, FileText, Mail, Phone, MapPin, Clock } from 'lucide-react';
+import { ArrowLeft, Search, Edit2, X, CheckCircle, Circle, User, Trash2, Calendar, CreditCard, DollarSign, FileText, Mail, Phone, MapPin, Clock, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import Loading from '../components/Loading';
 
 const Admin: React.FC = () => {
@@ -14,6 +14,8 @@ const Admin: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -176,11 +178,89 @@ const Admin: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // Função de ordenação
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      // Se já está ordenando por esta coluna, inverte a direção
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Se é uma nova coluna, define como ascendente
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  // Aplicar ordenação
+  const sortedRegistrations = [...filteredRegistrations].sort((a, b) => {
+    if (!sortColumn) return 0;
+
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortColumn) {
+      case 'status':
+        aValue = a.checked_in ? 1 : 0;
+        bValue = b.checked_in ? 1 : 0;
+        break;
+      case 'name':
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+        break;
+      case 'phone':
+        aValue = a.phone || '';
+        bValue = b.phone || '';
+        break;
+      case 'cpf':
+        aValue = a.cpf || '';
+        bValue = b.cpf || '';
+        break;
+      case 'payment':
+        // Ordenar por status: approved > pending > rejected
+        const paymentOrder = { approved: 3, pending: 2, rejected: 1 };
+        aValue = paymentOrder[a.payment_status] || 0;
+        bValue = paymentOrder[b.payment_status] || 0;
+        break;
+      case 'created_at':
+        aValue = new Date(a.created_at).getTime();
+        bValue = new Date(b.created_at).getTime();
+        break;
+      default:
+        return 0;
+    }
+
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Função para renderizar ícone de ordenação
+  const renderSortIcon = (column: string) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="w-4 h-4 ml-1 text-gray-400" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="w-4 h-4 ml-1 text-[#B8860B]" />
+      : <ArrowDown className="w-4 h-4 ml-1 text-[#B8860B]" />;
+  };
+
   const stats = {
     total: registrations.length,
     approved: registrations.filter(r => r.payment_status === 'approved').length,
     pending: registrations.filter(r => r.payment_status === 'pending').length,
     checkedIn: registrations.filter(r => r.checked_in).length,
+  };
+
+  // Função para formatar data/hora no fuso horário do Brasil
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/Sao_Paulo'
+    });
   };
 
   if (loading) {
@@ -333,7 +413,7 @@ const Admin: React.FC = () => {
           <>
             {/* Cards View - Mobile */}
             <div className="md:hidden space-y-4">
-              {filteredRegistrations.map((registration) => (
+              {sortedRegistrations.map((registration) => (
                 <div
                   key={registration.id}
                   className="bg-white/80 backdrop-blur-sm rounded-xl border border-[#E8DCC4] shadow-lg p-4 space-y-3"
@@ -419,6 +499,12 @@ const Admin: React.FC = () => {
                       <span className="text-gray-400">CPF:</span>
                       <span className="text-gray-600">{registration.cpf}</span>
                     </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-600">
+                        {formatDateTime(registration.created_at)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -430,16 +516,65 @@ const Admin: React.FC = () => {
                 <table className="w-full">
                   <thead className="bg-[#F5F5DC]">
                     <tr>
-                      <th className="px-6 py-4 text-left text-gray-700">Status</th>
-                      <th className="px-6 py-4 text-left text-gray-700">Nome</th>
-                      <th className="px-6 py-4 text-left text-gray-700">Telefone</th>
-                      <th className="px-6 py-4 text-left text-gray-700">CPF</th>
-                      <th className="px-6 py-4 text-left text-gray-700">Pagamento</th>
+                      <th 
+                        className="px-6 py-4 text-left text-gray-700 cursor-pointer hover:bg-[#E8DCC4]/50 transition-colors select-none"
+                        onClick={() => handleSort('status')}
+                      >
+                        <div className="flex items-center">
+                          Status
+                          {renderSortIcon('status')}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-4 text-left text-gray-700 cursor-pointer hover:bg-[#E8DCC4]/50 transition-colors select-none"
+                        onClick={() => handleSort('name')}
+                      >
+                        <div className="flex items-center">
+                          Nome
+                          {renderSortIcon('name')}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-4 text-left text-gray-700 cursor-pointer hover:bg-[#E8DCC4]/50 transition-colors select-none"
+                        onClick={() => handleSort('phone')}
+                      >
+                        <div className="flex items-center">
+                          Telefone
+                          {renderSortIcon('phone')}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-4 text-left text-gray-700 cursor-pointer hover:bg-[#E8DCC4]/50 transition-colors select-none"
+                        onClick={() => handleSort('cpf')}
+                      >
+                        <div className="flex items-center">
+                          CPF
+                          {renderSortIcon('cpf')}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-4 text-left text-gray-700 cursor-pointer hover:bg-[#E8DCC4]/50 transition-colors select-none"
+                        onClick={() => handleSort('payment')}
+                      >
+                        <div className="flex items-center">
+                          Pagamento
+                          {renderSortIcon('payment')}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-4 text-left text-gray-700 cursor-pointer hover:bg-[#E8DCC4]/50 transition-colors select-none"
+                        onClick={() => handleSort('created_at')}
+                      >
+                        <div className="flex items-center">
+                          Data/Hora
+                          {renderSortIcon('created_at')}
+                        </div>
+                      </th>
                       <th className="px-6 py-4 text-left text-gray-700">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredRegistrations.map((registration) => (
+                    {sortedRegistrations.map((registration) => (
                       <tr 
                         key={registration.id} 
                         className="border-t border-[#E8DCC4] hover:bg-[#F5F5DC]/30 cursor-pointer transition-colors"
@@ -483,6 +618,14 @@ const Admin: React.FC = () => {
                             {registration.payment_status === 'pending' && '⏱ Pendente'}
                             {registration.payment_status === 'rejected' && '✗ Rejeitado'}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-gray-400" />
+                            <span>
+                              {formatDateTime(registration.created_at)}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
@@ -772,13 +915,7 @@ const Admin: React.FC = () => {
                         Data do Pagamento
                       </p>
                       <p className="text-gray-800 font-medium">
-                        {new Date(selectedDetailsRegistration.payment_date).toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        {formatDateTime(selectedDetailsRegistration.payment_date)}
                       </p>
                     </div>
                   )}
@@ -827,13 +964,7 @@ const Admin: React.FC = () => {
                         Data do Check-in
                       </p>
                       <p className="text-gray-800 font-medium">
-                        {new Date(selectedDetailsRegistration.checked_in_date).toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        {formatDateTime(selectedDetailsRegistration.checked_in_date)}
                       </p>
                     </div>
                   )}
@@ -859,13 +990,7 @@ const Admin: React.FC = () => {
                       Data de Criação
                     </p>
                     <p className="text-gray-800 font-medium">
-                      {new Date(selectedDetailsRegistration.created_at).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      {formatDateTime(selectedDetailsRegistration.created_at)}
                     </p>
                   </div>
                 </div>

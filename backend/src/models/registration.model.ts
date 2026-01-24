@@ -1,21 +1,52 @@
 import pool from '../config/database.js';
 import { Registration } from '../types/index.js';
 
+// Função helper para converter datas do UTC para o fuso horário do Brasil
+// O PostgreSQL retorna datas em UTC, mas precisamos exibir no horário do Brasil (GMT-3)
+const convertToBrazilTimezone = (rows: any[]): any[] => {
+  return rows.map(row => {
+    const convertDate = (date: Date | string | null) => {
+      if (!date) return null;
+      
+      // Criar objeto Date a partir da string/data
+      const d = typeof date === 'string' ? new Date(date) : date;
+      
+      // Se a data vem do PostgreSQL em UTC, o JavaScript já interpreta corretamente
+      // Mas precisamos garantir que seja tratada como UTC e depois ajustada para GMT-3
+      // O problema é que se o servidor Node.js está em outro timezone, pode haver confusão
+      // Vamos forçar a interpretação como UTC e depois ajustar para Brasil
+      const utcTime = d.getTime();
+      const brazilOffset = -3 * 60 * 60 * 1000; // GMT-3 em milissegundos
+      
+      // Criar nova data ajustada para o horário do Brasil
+      return new Date(utcTime + brazilOffset);
+    };
+
+    return {
+      ...row,
+      created_at: convertDate(row.created_at),
+      updated_at: convertDate(row.updated_at),
+      payment_date: convertDate(row.payment_date),
+      checked_in_date: convertDate(row.checked_in_date),
+    };
+  });
+};
+
 export class RegistrationModel {
   // Buscar todas as inscrições (com filtro opcional por evento)
   static async findAll(eventId?: string): Promise<Registration[]> {
+    let result;
     if (eventId) {
-      const result = await pool.query(
+      result = await pool.query(
         'SELECT * FROM registrations WHERE event_id = $1 ORDER BY created_at DESC',
         [eventId]
       );
-      return result.rows;
+    } else {
+      result = await pool.query(
+        'SELECT * FROM registrations ORDER BY created_at DESC'
+      );
     }
-    
-    const result = await pool.query(
-      'SELECT * FROM registrations ORDER BY created_at DESC'
-    );
-    return result.rows;
+    return convertToBrazilTimezone(result.rows);
   }
 
   // Buscar inscrição por ID
@@ -24,7 +55,8 @@ export class RegistrationModel {
       'SELECT * FROM registrations WHERE id = $1',
       [id]
     );
-    return result.rows[0] || null;
+    const converted = convertToBrazilTimezone(result.rows);
+    return converted[0] || null;
   }
 
   // Buscar inscrição por CPF e evento
@@ -33,7 +65,8 @@ export class RegistrationModel {
       'SELECT * FROM registrations WHERE cpf = $1 AND event_id = $2',
       [cpf, eventId]
     );
-    return result.rows[0] || null;
+    const converted = convertToBrazilTimezone(result.rows);
+    return converted[0] || null;
   }
 
   // Buscar inscrição por email e evento
@@ -42,7 +75,8 @@ export class RegistrationModel {
       'SELECT * FROM registrations WHERE email = $1 AND event_id = $2',
       [email, eventId]
     );
-    return result.rows[0] || null;
+    const converted = convertToBrazilTimezone(result.rows);
+    return converted[0] || null;
   }
 
   // Criar nova inscrição
@@ -53,7 +87,8 @@ export class RegistrationModel {
        RETURNING *`,
       [registration.event_id, registration.name, registration.email, registration.phone, registration.cpf, registration.address]
     );
-    return result.rows[0];
+    const converted = convertToBrazilTimezone(result.rows);
+    return converted[0];
   }
 
   // Atualizar inscrição
@@ -78,7 +113,8 @@ export class RegistrationModel {
       values
     );
 
-    return result.rows[0] || null;
+    const converted = convertToBrazilTimezone(result.rows);
+    return converted[0] || null;
   }
 
   // Atualizar status de pagamento com informações completas
@@ -102,7 +138,8 @@ export class RegistrationModel {
        RETURNING *`,
       [paymentStatus, paymentId, paymentMethod, paymentAmount, paymentDate, id]
     );
-    return result.rows[0] || null;
+    const converted = convertToBrazilTimezone(result.rows);
+    return converted[0] || null;
   }
 
   // Fazer check-in
@@ -126,7 +163,8 @@ export class RegistrationModel {
       'UPDATE registrations SET checked_in = $1, checked_in_date = $2 WHERE id = $3 RETURNING *',
       [newCheckedInStatus, checkInDate, id]
     );
-    return result.rows[0] || null;
+    const converted = convertToBrazilTimezone(result.rows);
+    return converted[0] || null;
   }
 
   // Fazer check-in apenas (não remove se já estiver feito)
@@ -154,7 +192,8 @@ export class RegistrationModel {
       'UPDATE registrations SET checked_in = true, checked_in_date = $1 WHERE id = $2 RETURNING *',
       [checkInDate, id]
     );
-    return result.rows[0] || null;
+    const converted = convertToBrazilTimezone(result.rows);
+    return converted[0] || null;
   }
 
   // Deletar inscrição
@@ -197,7 +236,7 @@ export class RegistrationModel {
        ORDER BY created_at DESC`,
       [normalizedCpf, cpf]
     );
-    return result.rows;
+    return convertToBrazilTimezone(result.rows);
   }
 
   // Buscar inscrição pendente por email e evento
@@ -206,7 +245,8 @@ export class RegistrationModel {
       "SELECT * FROM registrations WHERE email = $1 AND event_id = $2 AND payment_status = 'pending' ORDER BY created_at DESC LIMIT 1",
       [email, eventId]
     );
-    return result.rows[0] || null;
+    const converted = convertToBrazilTimezone(result.rows);
+    return converted[0] || null;
   }
 
   // Buscar inscrição por payment_id
@@ -215,6 +255,7 @@ export class RegistrationModel {
       'SELECT * FROM registrations WHERE payment_id = $1',
       [paymentId]
     );
-    return result.rows[0] || null;
+    const converted = convertToBrazilTimezone(result.rows);
+    return converted[0] || null;
   }
 }

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import type { Registration } from '../types';
 import { api } from '../services/apiSelector';
-import { ArrowLeft, Search, Edit2, X, CheckCircle, Circle, User, Trash2, Calendar, CreditCard, DollarSign, FileText, Mail, Phone, MapPin, Clock, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowLeft, Search, Edit2, X, CheckCircle, Circle, User, Trash2, Calendar, CreditCard, DollarSign, FileText, Mail, Phone, MapPin, Clock, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import Loading from '../components/Loading';
 
 const Admin: React.FC = () => {
@@ -16,6 +16,8 @@ const Admin: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -30,6 +32,37 @@ const Admin: React.FC = () => {
     }
     loadRegistrations();
   }, [isAuthenticated, user, navigate]);
+
+  // Ref para armazenar o timer do debounce
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Função de debounce para atualizar o searchTerm
+  const handleSearchChange = (value: string) => {
+    // Limpar timer anterior se existir
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Se o valor estiver vazio, atualizar imediatamente
+    if (value === '') {
+      setSearchTerm('');
+      return;
+    }
+
+    // Criar novo timer
+    debounceTimerRef.current = setTimeout(() => {
+      setSearchTerm(value);
+    }, 500);
+  };
+
+  // Cleanup do timer quando componente desmontar
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   // Bloquear scroll do body quando modais estiverem abertos
   useEffect(() => {
@@ -163,21 +196,6 @@ const Admin: React.FC = () => {
     }
   };
 
-  const filteredRegistrations = registrations.filter(reg => {
-    const matchesSearch = 
-      reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.cpf.includes(searchTerm);
-
-    const matchesStatus = 
-      filterStatus === 'all' ||
-      (filterStatus === 'checked_in' && reg.checked_in) ||
-      (filterStatus === 'not_checked_in' && !reg.checked_in) ||
-      reg.payment_status === filterStatus;
-
-    return matchesSearch && matchesStatus;
-  });
-
   // Função de ordenação
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -190,48 +208,104 @@ const Admin: React.FC = () => {
     }
   };
 
-  // Aplicar ordenação
-  const sortedRegistrations = [...filteredRegistrations].sort((a, b) => {
-    if (!sortColumn) return 0;
+  // Memoizar a filtragem para evitar recálculos desnecessários
+  const filteredRegistrations = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
+    
+    return registrations.filter(reg => {
+      // Otimizar busca: só fazer toLowerCase uma vez
+      const matchesSearch = searchTerm === '' || 
+        reg.name.toLowerCase().includes(searchLower) ||
+        reg.email.toLowerCase().includes(searchLower) ||
+        reg.cpf.includes(searchTerm);
 
-    let aValue: any;
-    let bValue: any;
+      const matchesStatus = 
+        filterStatus === 'all' ||
+        (filterStatus === 'checked_in' && reg.checked_in) ||
+        (filterStatus === 'not_checked_in' && !reg.checked_in) ||
+        reg.payment_status === filterStatus;
 
-    switch (sortColumn) {
-      case 'status':
-        aValue = a.checked_in ? 1 : 0;
-        bValue = b.checked_in ? 1 : 0;
-        break;
-      case 'name':
-        aValue = a.name.toLowerCase();
-        bValue = b.name.toLowerCase();
-        break;
-      case 'phone':
-        aValue = a.phone || '';
-        bValue = b.phone || '';
-        break;
-      case 'cpf':
-        aValue = a.cpf || '';
-        bValue = b.cpf || '';
-        break;
-      case 'payment':
-        // Ordenar por status: approved > pending > rejected
-        const paymentOrder = { approved: 3, pending: 2, rejected: 1 };
-        aValue = paymentOrder[a.payment_status] || 0;
-        bValue = paymentOrder[b.payment_status] || 0;
-        break;
-      case 'created_at':
-        aValue = new Date(a.created_at).getTime();
-        bValue = new Date(b.created_at).getTime();
-        break;
-      default:
-        return 0;
+      return matchesSearch && matchesStatus;
+    });
+  }, [registrations, searchTerm, filterStatus]);
+
+  // Memoizar a ordenação para evitar recálculos desnecessários
+  const sortedRegistrations = useMemo(() => {
+    if (!sortColumn) return filteredRegistrations;
+
+    return [...filteredRegistrations].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortColumn) {
+        case 'status':
+          aValue = a.checked_in ? 1 : 0;
+          bValue = b.checked_in ? 1 : 0;
+          break;
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'phone':
+          aValue = a.phone || '';
+          bValue = b.phone || '';
+          break;
+        case 'cpf':
+          aValue = a.cpf || '';
+          bValue = b.cpf || '';
+          break;
+        case 'payment':
+          // Ordenar por status: approved > pending > rejected
+          const paymentOrder = { approved: 3, pending: 2, rejected: 1 };
+          aValue = paymentOrder[a.payment_status] || 0;
+          bValue = paymentOrder[b.payment_status] || 0;
+          break;
+        case 'created_at':
+          aValue = new Date(a.created_at).getTime();
+          bValue = new Date(b.created_at).getTime();
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredRegistrations, sortColumn, sortDirection]);
+
+  // Calcular paginação
+  const totalPages = Math.ceil(sortedRegistrations.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRegistrations = sortedRegistrations.slice(startIndex, endIndex);
+
+  // Resetar para primeira página quando filtros mudarem
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus, sortColumn, sortDirection]);
+
+  // Funções de navegação
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
 
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   // Função para renderizar ícone de ordenação
   const renderSortIcon = (column: string) => {
@@ -353,8 +427,11 @@ const Admin: React.FC = () => {
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                defaultValue={searchTerm}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  handleSearchChange(value);
+                }}
                 placeholder="Buscar por nome, e-mail ou CPF..."
                 className="w-full pl-12 pr-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50 text-sm md:text-base"
               />
@@ -413,7 +490,7 @@ const Admin: React.FC = () => {
           <>
             {/* Cards View - Mobile */}
             <div className="md:hidden space-y-4">
-              {sortedRegistrations.map((registration) => (
+              {paginatedRegistrations.map((registration) => (
                 <div
                   key={registration.id}
                   className="bg-white/80 backdrop-blur-sm rounded-xl border border-[#E8DCC4] shadow-lg p-4 space-y-3"
@@ -574,7 +651,7 @@ const Admin: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedRegistrations.map((registration) => (
+                    {paginatedRegistrations.map((registration) => (
                       <tr 
                         key={registration.id} 
                         className="border-t border-[#E8DCC4] hover:bg-[#F5F5DC]/30 cursor-pointer transition-colors"
@@ -651,6 +728,88 @@ const Admin: React.FC = () => {
                 </table>
               </div>
             </div>
+
+            {/* Controles de Paginação */}
+            {totalPages > 1 && (
+              <div className="mt-6 bg-white/80 backdrop-blur-sm rounded-xl border border-[#E8DCC4] shadow-lg p-4">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  {/* Informações da paginação */}
+                  <div className="text-sm text-gray-600">
+                    Mostrando {startIndex + 1} a {Math.min(endIndex, sortedRegistrations.length)} de {sortedRegistrations.length} inscrições
+                  </div>
+
+                  {/* Seletor de itens por página */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600">Itens por página:</label>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white text-sm"
+                    >
+                      <option value="5">5</option>
+                      <option value="10">10</option>
+                      <option value="20">20</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                    </select>
+                  </div>
+
+                  {/* Navegação de páginas */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={goToPreviousPage}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-lg border border-[#E8DCC4] hover:bg-[#F5F5DC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Página anterior"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+
+                    {/* Números de página */}
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNumber: number;
+                        if (totalPages <= 5) {
+                          pageNumber = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNumber = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNumber = totalPages - 4 + i;
+                        } else {
+                          pageNumber = currentPage - 2 + i;
+                        }
+
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => goToPage(pageNumber)}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                              currentPage === pageNumber
+                                ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white'
+                                : 'border border-[#E8DCC4] hover:bg-[#F5F5DC] text-gray-700'
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      onClick={goToNextPage}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-lg border border-[#E8DCC4] hover:bg-[#F5F5DC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Próxima página"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

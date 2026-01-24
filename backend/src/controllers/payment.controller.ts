@@ -336,24 +336,36 @@ export class PaymentController {
           return;
         }
 
-        // Verificar se é um webhook de teste (sem assinatura válida ou em desenvolvimento)
-        const isTestWebhook = !process.env.MERCADOPAGO_WEBHOOK_SECRET ||
-          process.env.NODE_ENV !== 'production' ||
-          !req.headers['x-signature'];
+        // Em PRODUÇÃO, SEMPRE consultar status real no Mercado Pago
+        // Só usar aprovação automática em desenvolvimento quando não tiver secret configurado
+        const isProduction = process.env.NODE_ENV === 'production';
+        const hasWebhookSecret = !!process.env.MERCADOPAGO_WEBHOOK_SECRET;
+        const isTestWebhook = !isProduction && !hasWebhookSecret;
 
         let status: string;
 
         if (isTestWebhook) {
-          // Em modo de teste, se o webhook foi chamado, assumir que foi aprovado
-          console.log('🧪 Modo de teste: Webhook chamado, atualizando para approved');
+          // Apenas em desenvolvimento sem secret: modo de teste, assumir aprovado
+          console.log('🧪 Modo de teste (desenvolvimento sem secret): Webhook chamado, atualizando para approved');
           status = 'approved';
         } else {
-          // Em produção, consultar status real no Mercado Pago
-          const result = await payment.get({ id: paymentId });
-          console.log(`📊 Status do pagamento ${paymentId} no Mercado Pago: ${result.status}`);
+          // Em produção OU desenvolvimento com secret: consultar status real no Mercado Pago
+          console.log(`🔍 Consultando status real do pagamento ${paymentId} no Mercado Pago...`);
+          console.log(`   Ambiente: ${isProduction ? 'PRODUÇÃO' : 'DESENVOLVIMENTO'}`);
+          console.log(`   Webhook Secret configurado: ${hasWebhookSecret ? 'SIM' : 'NÃO'}`);
+          
+          try {
+            const result = await payment.get({ id: paymentId });
+            console.log(`📊 Status do pagamento ${paymentId} no Mercado Pago: ${result.status}`);
 
-          status = result.status === 'approved' ? 'approved' :
-            result.status === 'rejected' ? 'rejected' : 'pending';
+            status = result.status === 'approved' ? 'approved' :
+              result.status === 'rejected' ? 'rejected' : 'pending';
+          } catch (error: any) {
+            console.error(`❌ Erro ao consultar status do pagamento ${paymentId}:`, error.message);
+            // Em caso de erro ao consultar, manter como pending (não aprovar automaticamente)
+            status = 'pending';
+            console.log('⚠️ Status mantido como pending devido ao erro na consulta');
+          }
         }
 
         // Atualizar status do pagamento

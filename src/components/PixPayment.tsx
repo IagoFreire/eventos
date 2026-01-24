@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Copy, CheckCircle, Clock, QrCode as QrCodeIcon } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { formatPrice } from '../utils/formatPrice';
+import { publicKey } from '../services/mercadopago-config';
 
 interface PixPaymentProps {
   qrCode?: string;
@@ -31,6 +32,9 @@ const PixPayment: React.FC<PixPaymentProps> = ({
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutos em segundos
   const [isChecking, setIsChecking] = useState(false);
+
+  // Detectar se está em produção (chave pública não começa com TEST-)
+  const isProduction = publicKey && !publicKey.startsWith('TEST-') && publicKey.startsWith('APP_USR-');
 
   // Timer de contagem regressiva
   useEffect(() => {
@@ -250,8 +254,8 @@ const PixPayment: React.FC<PixPaymentProps> = ({
         </ol>
       </div>
 
-      {/* Botão para Simular Pagamento (sempre visível para testes) */}
-      {onPaymentConfirmed && (
+      {/* Botão para Simular Pagamento (apenas em desenvolvimento/teste) */}
+      {onPaymentConfirmed && !isProduction && (
         <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6">
           <div className="text-center mb-4">
             <p className="text-yellow-900 font-semibold mb-2">

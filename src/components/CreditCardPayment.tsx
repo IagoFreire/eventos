@@ -338,20 +338,22 @@ const CreditCardPayment: React.FC<CreditCardPaymentProps> = ({
         <p className="text-3xl font-bold">{formatPrice(amount)}</p>
       </div>
 
-      {/* Aviso de Teste */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-yellow-900 font-semibold mb-1">
-              🧪 Modo de Teste
-            </p>
-            <p className="text-yellow-700 text-sm">
-              Use os dados de teste abaixo. Em produção, o cartão real será cobrado.
-            </p>
+      {/* Aviso de Teste - apenas em desenvolvimento */}
+      {!isPublicKeyProduction && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-yellow-900 font-semibold mb-1">
+                🧪 Modo de Teste
+              </p>
+              <p className="text-yellow-700 text-sm">
+                Use os dados de teste abaixo. Em produção, o cartão real será cobrado.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* CardPayment Brick do Mercado Pago */}
       {/* Usar componente memoizado para evitar recarregamento quando estados mudam */}
@@ -378,31 +380,33 @@ const CreditCardPayment: React.FC<CreditCardPaymentProps> = ({
         </button>
       </div>
 
-      {/* Dados de Teste */}
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-        <h4 className="text-lg font-semibold text-gray-800 mb-3">
-          📋 Dados de Teste do Mercado Pago
-        </h4>
-        <div className="space-y-3 text-sm">
-          <div>
-            <p className="text-gray-700 font-medium mb-1">✅ Cartão Aprovado:</p>
-            <p className="text-gray-600 font-mono">5031 4332 1540 6351</p>
-            <p className="text-gray-600">Nome: APRO</p>
-            <p className="text-gray-600">CVV: 123 | Validade: 11/30</p>
-            <p className="text-gray-600">CPF: 12345678909</p>
-          </div>
-          <div>
-            <p className="text-gray-700 font-medium mb-1">❌ Cartão Recusado:</p>
-            <p className="text-gray-600 font-mono">5031 4332 1540 6351</p>
-            <p className="text-gray-600">Nome: OTHE</p>
-          </div>
-          <div>
-            <p className="text-gray-700 font-medium mb-1">⏳ Pagamento Pendente:</p>
-            <p className="text-gray-600 font-mono">5031 4332 1540 6351</p>
-            <p className="text-gray-600">Nome: PEND</p>
+      {/* Dados de Teste - apenas em desenvolvimento */}
+      {!isPublicKeyProduction && (
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+          <h4 className="text-lg font-semibold text-gray-800 mb-3">
+            📋 Dados de Teste do Mercado Pago
+          </h4>
+          <div className="space-y-3 text-sm">
+            <div>
+              <p className="text-gray-700 font-medium mb-1">✅ Cartão Aprovado:</p>
+              <p className="text-gray-600 font-mono">5031 4332 1540 6351</p>
+              <p className="text-gray-600">Nome: APRO</p>
+              <p className="text-gray-600">CVV: 123 | Validade: 11/30</p>
+              <p className="text-gray-600">CPF: 12345678909</p>
+            </div>
+            <div>
+              <p className="text-gray-700 font-medium mb-1">❌ Cartão Recusado:</p>
+              <p className="text-gray-600 font-mono">5031 4332 1540 6351</p>
+              <p className="text-gray-600">Nome: OTHE</p>
+            </div>
+            <div>
+              <p className="text-gray-700 font-medium mb-1">⏳ Pagamento Pendente:</p>
+              <p className="text-gray-600 font-mono">5031 4332 1540 6351</p>
+              <p className="text-gray-600">Nome: PEND</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

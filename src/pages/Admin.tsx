@@ -34,7 +34,7 @@ const Admin: React.FC = () => {
   }, [isAuthenticated, user, navigate]);
 
   // Ref para armazenar o timer do debounce
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Função de debounce para atualizar o searchTerm
   const handleSearchChange = (value: string) => {

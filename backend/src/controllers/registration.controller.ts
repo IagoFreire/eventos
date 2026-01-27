@@ -463,4 +463,56 @@ export class RegistrationController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  // Simular pagamento (apenas em desenvolvimento/teste - hardcoded)
+  static async simulatePayment(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { amount } = req.body;
+      
+      const registration = await RegistrationModel.findById(id);
+      
+      if (!registration) {
+        res.status(404).json({ error: 'Inscrição não encontrada' });
+        return;
+      }
+
+      // Hardcode: definir como pago no banco de dados
+      const paymentId = registration.payment_id || `simulated-${Date.now()}`;
+      const paymentMethod = registration.payment_method || 'pix';
+      // Usar o valor fornecido no body, ou o existente no registro, ou undefined
+      const paymentAmount = amount !== undefined ? Number(amount) : (registration.payment_amount || undefined);
+
+      // Atualizar status de pagamento para approved
+      await RegistrationModel.updatePaymentStatus(
+        id,
+        'approved',
+        paymentId,
+        paymentMethod,
+        paymentAmount
+      );
+
+      // Retornar a inscrição atualizada
+      const updatedRegistration = await RegistrationModel.findById(id);
+      
+      res.json({
+        id: updatedRegistration?.id,
+        name: updatedRegistration?.name,
+        email: updatedRegistration?.email,
+        phone: updatedRegistration?.phone,
+        cpf: updatedRegistration?.cpf,
+        event_id: updatedRegistration?.event_id,
+        payment_status: updatedRegistration?.payment_status,
+        payment_id: updatedRegistration?.payment_id,
+        payment_method: updatedRegistration?.payment_method,
+        payment_amount: updatedRegistration?.payment_amount,
+        checked_in: updatedRegistration?.checked_in,
+        created_at: updatedRegistration?.created_at,
+        updated_at: updatedRegistration?.updated_at,
+      });
+    } catch (error: any) {
+      console.error('❌ [SIMULAR PAGAMENTO] Erro ao simular pagamento:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
 }

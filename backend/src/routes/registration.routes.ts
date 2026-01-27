@@ -19,7 +19,10 @@ const registrationValidation = [
 router.post('/', registrationValidation, validate, RegistrationController.create);
 router.get('/by-cpf', RegistrationController.getByCpf);
 router.get('/pending-by-email', RegistrationController.getPendingByEmail);
-router.patch('/:id/payment-method', RegistrationController.updatePaymentMethod); // Rota pública para atualizar método de pagamento (deve vir antes de /:id)
+
+// IMPORTANTE: Rotas específicas com /:id devem vir ANTES das rotas genéricas /:id
+router.post('/:id/simulate-payment', RegistrationController.simulatePayment); // Rota pública para simular pagamento (hardcoded)
+router.patch('/:id/payment-method', RegistrationController.updatePaymentMethod); // Rota pública para atualizar método de pagamento
 router.get('/:id/check-payment', RegistrationController.checkPaymentStatus); // Rota pública para verificar pagamento
 
 // Rotas protegidas (admin apenas)

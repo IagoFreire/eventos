@@ -182,6 +182,30 @@ export const mockApi = {
     return registration;
   },
 
+  simulatePayment: async (id: string, amount?: number): Promise<Registration> => {
+    await mockDelay();
+    
+    const index = registrations.findIndex(r => r.id === id);
+    if (index === -1) {
+      throw new Error('Inscrição não encontrada');
+    }
+    
+    // Hardcode: atualizar status para approved
+    registrations[index] = {
+      ...registrations[index],
+      payment_status: 'approved',
+      payment_id: registrations[index].payment_id || `simulated-${Date.now()}`,
+      payment_method: registrations[index].payment_method || 'pix',
+      payment_amount: amount !== undefined ? amount : (registrations[index].payment_amount || undefined),
+      payment_date: new Date().toISOString(),
+    };
+    
+    saveToStorage(STORAGE_KEYS.REGISTRATIONS, registrations);
+    console.log('✅ [MOCK] Pagamento simulado - status atualizado para approved');
+    
+    return registrations[index];
+  },
+
   getRegistrationsByCpf: async (cpf: string): Promise<Registration[]> => {
     await mockDelay();
     

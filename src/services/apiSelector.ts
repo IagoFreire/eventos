@@ -23,6 +23,7 @@ export const api = isOfflineMode() ? {
   getRegistrations: mockApi.getRegistrations,
   getRegistrationById: mockApi.getRegistrationById,
   checkPaymentStatus: mockApi.getRegistrationById, // Usar mesma função do mock
+  simulatePayment: mockApi.simulatePayment, // Simular pagamento no mock
   getRegistrationsByCpf: mockApi.getRegistrationsByCpf || (async () => []),
   getPendingRegistrationByEmail: mockApi.getPendingRegistrationByEmail || (async () => null),
   updateRegistration: mockApi.updateRegistration,
@@ -54,6 +55,7 @@ export const api = isOfflineMode() ? {
   getRegistrations: realApi.getRegistrations,
   getRegistrationById: realApi.getRegistrationById,
   checkPaymentStatus: realApi.checkPaymentStatus,
+  simulatePayment: realApi.simulatePayment,
   getRegistrationsByCpf: realApi.getRegistrationsByCpf,
   getPendingRegistrationByEmail: realApi.getPendingRegistrationByEmail,
   updateRegistration: realApi.updateRegistration,

@@ -10,6 +10,14 @@ const api = axios.create({
   },
 });
 
+// Instância do axios sem interceptor para rotas públicas
+const publicApi = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // Interceptor para adicionar token de autenticação
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -89,6 +97,15 @@ export const getRegistrationById = async (id: string): Promise<Registration> => 
 // Verificar status de pagamento (rota pública - usado pelo botão "Já Paguei")
 export const checkPaymentStatus = async (id: string): Promise<Registration> => {
   const response = await api.get(`/registrations/${id}/check-payment`);
+  return response.data;
+};
+
+// Simular pagamento (hardcoded - apenas para desenvolvimento/teste)
+export const simulatePayment = async (id: string, amount?: number): Promise<Registration> => {
+  // Usar instância pública do axios (sem interceptor de token)
+  const response = await publicApi.post(`/registrations/${id}/simulate-payment`, {
+    amount: amount
+  });
   return response.data;
 };
 

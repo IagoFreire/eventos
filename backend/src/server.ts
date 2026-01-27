@@ -16,13 +16,10 @@ const PORT = process.env.PORT || 3000;
 // Middlewares
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  'http://localhost:5173',
-  'http://18.206.108.149',
-  'https://18.206.108.149',
-  'https://igrejacasabetania.com.br',
-  'http://igrejacasabetania.com.br',
-  'https://www.igrejacasabetania.com.br',
-  'http://www.igrejacasabetania.com.br',
+  'http://52.73.196.32',
+  'https://52.73.196.32',
+  'https://eventos.iagofreire.dev',
+  'http://eventos.iagofreire.dev',
 ].filter(Boolean) as string[];
 
 app.use(cors({

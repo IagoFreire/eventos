@@ -31,7 +31,6 @@ export interface EventSettings {
   event_title_button_color?: string;
   event_title_button_text_color?: string;
   event_title_font_weight?: string;
-  event_title_image_url?: string;
   included_items: IncludedItem[];
   church_name: string;
   church_contact_phone?: string; // Mantido para compatibilidade

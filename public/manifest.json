@@ -1,7 +1,7 @@
 {
-  "name": "Igreja Casa Betânia",
-  "short_name": "Igreja Casa Betânia",
-  "description": "Igreja Casa Betânia",
+  "name": "Eventos",
+  "short_name": "Eventos",
+  "description": "Eventos",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F5F5DC",

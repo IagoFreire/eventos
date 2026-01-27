@@ -81,14 +81,34 @@ export class EventController {
   static async update(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const event = await EventModel.update(id, req.body);
+      const { dates, ...eventData } = req.body;
+      
+      // Atualizar dados do evento
+      const event = await EventModel.update(id, eventData);
       
       if (!event) {
         res.status(404).json({ error: 'Evento não encontrado' });
         return;
       }
 
-      res.json(event);
+      // Se datas foram fornecidas, atualizar as datas do evento
+      if (dates !== undefined && Array.isArray(dates)) {
+        // Normalizar datas: extrair apenas o valor date se for um objeto
+        const normalizedDates = dates.map((date: any) => {
+          if (typeof date === 'string' || date instanceof Date) {
+            return date;
+          }
+          if (date && typeof date === 'object' && date.date) {
+            return date.date;
+          }
+          return date;
+        });
+        await EventModel.updateEventDates(id, normalizedDates);
+      }
+
+      // Retornar evento atualizado com datas
+      const updatedEvent = await EventModel.findById(id);
+      res.json(updatedEvent);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -138,6 +158,46 @@ export class EventController {
       });
 
       res.json(settings);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Buscar datas do evento
+  static async getDates(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const dates = await EventModel.findDatesByEventId(id);
+      res.json(dates);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Atualizar datas do evento
+  static async updateDates(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { dates } = req.body;
+
+      if (!Array.isArray(dates)) {
+        res.status(400).json({ error: 'Datas devem ser um array' });
+        return;
+      }
+
+      // Normalizar datas: extrair apenas o valor date se for um objeto
+      const normalizedDates = dates.map((date: any) => {
+        if (typeof date === 'string' || date instanceof Date) {
+          return date;
+        }
+        if (date && typeof date === 'object' && date.date) {
+          return date.date;
+        }
+        return date;
+      });
+
+      const updatedDates = await EventModel.updateEventDates(id, normalizedDates);
+      res.json(updatedDates);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

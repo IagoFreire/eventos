@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useSettings } from '../contexts/SettingsContext';
 import { LogOut, Menu, X, CheckCircle, Edit2, Home, Ticket, Settings } from 'lucide-react';
+import logoImage from '../assets/logo.png';
 
 const Header: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuth();
-  const { settings, loading: loadingSettings } = useSettings();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -15,8 +14,6 @@ const Header: React.FC = () => {
     navigate('/');
     setIsMenuOpen(false);
   };
-
-  const churchName = settings?.church_name || 'Igreja Evangélica';
 
   // Fechar menu ao clicar em um link
   const handleLinkClick = () => {
@@ -49,17 +46,10 @@ const Header: React.FC = () => {
 
   return (
     <>
-      <header className="bg-white/80 backdrop-blur-sm border-b border-[#E8DCC4] sticky top-0 z-50">
+      <header className="bg-[rgb(235,220,197)] backdrop-blur-sm border-b border-[#E8DCC4] sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2" onClick={handleLinkClick}>
-            <div className="w-10 h-10 bg-gradient-to-br from-[#D4AF37] to-[#B8860B] rounded-full flex items-center justify-center">
-              <span className="text-white text-xl">✝</span>
-            </div>
-            {loadingSettings ? (
-              <div className="w-32 h-6 bg-gray-200 rounded animate-pulse"></div>
-            ) : (
-              <span className="text-xl text-[#B8860B] font-semibold">{churchName}</span>
-            )}
+            <img src={logoImage} alt="Logo da Igreja" style={{ height: 40}} />
           </Link>
           
           {/* Menu Desktop */}
@@ -135,14 +125,7 @@ const Header: React.FC = () => {
           {/* Header do Menu Mobile */}
           <div className="flex items-center justify-between p-6 border-b border-[#E8DCC4]">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-[#D4AF37] to-[#B8860B] rounded-full flex items-center justify-center">
-                <span className="text-white text-xl">✝</span>
-              </div>
-              {loadingSettings ? (
-                <div className="w-28 h-5 bg-gray-200 rounded animate-pulse"></div>
-              ) : (
-                <span className="text-lg text-[#B8860B] font-semibold">{churchName}</span>
-              )}
+              <img src={logoImage} alt="Logo da Igreja" style={{ height: 40}} />
             </div>
             <button
               onClick={() => setIsMenuOpen(false)}

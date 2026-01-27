@@ -66,48 +66,89 @@ npm run lint -- --fix
 npx tsc --noEmit
 ```
 
-## 🗄️ Banco de Dados (Supabase)
+## 🗄️ Banco de Dados
 
-### Via Interface Web
-1. Acesse https://supabase.com/dashboard
-2. Vá em SQL Editor
-3. Execute os scripts em ordem:
-   - `database/schema.sql`
-   - `database/policies.sql`
-   - `database/seed.sql`
+### Configurar Banco de Dados
 
-### Via CLI (Opcional)
+**Opção 1: PostgreSQL Local**
+1. Instale PostgreSQL
+2. Crie um banco de dados: `createdb eventos`
+3. Configure no `backend/.env`:
+   ```env
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=eventos
+   DB_USER=postgres
+   DB_PASSWORD=sua_senha
+   ```
+
+**Opção 2: Supabase (PostgreSQL gerenciado)**
+1. Crie um projeto em https://supabase.com
+2. Vá em Settings > Database > Connection Pooling
+3. Copie as credenciais do Connection Pooler
+4. Configure no `backend/.env`:
+   ```env
+   DB_HOST=aws-0-us-west-2.pooler.supabase.com
+   DB_PORT=5432
+   DB_NAME=postgres
+   DB_USER=postgres.seu_projeto_id
+   DB_PASSWORD=sua_senha_do_supabase
+   ```
+
+### Executar Migrações
 ```bash
-# Instalar Supabase CLI
-npm install -g supabase
-
-# Login
-supabase login
-
-# Link com projeto
-supabase link --project-ref seu-projeto-id
-
-# Executar migrations
-supabase db push
+cd backend
+npm run migrate
 ```
+
+Isso criará todas as tabelas necessárias.
+
+### Inserir Dados Iniciais (Opcional)
+```bash
+cd backend
+npm run seed
+```
+
+### Resetar Banco de Dados (CUIDADO!)
+```bash
+cd backend
+npm run db:reset
+```
+
+> ⚠️ **Atenção:** Isso apagará todos os dados!
 
 ## 🔑 Configurar Variáveis de Ambiente
 
 ### Frontend (.env)
 ```env
 VITE_API_URL=http://localhost:3000/api
-VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-VITE_SUPABASE_ANON_KEY=sua_chave_anonima
 VITE_MERCADO_PAGO_PUBLIC_KEY=sua_public_key
 ```
 
-### Obter credenciais Supabase
-```bash
-# URL do projeto
-1. Dashboard > Settings > API > Project URL
+### Backend (.env)
+```env
+PORT=3000
+NODE_ENV=development
 
-# Anon Key
-2. Dashboard > Settings > API > Project API keys > anon public
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=eventos
+DB_USER=postgres
+DB_PASSWORD=sua_senha
+
+JWT_SECRET=sua_chave_secreta
+JWT_EXPIRES_IN=7d
+
+MERCADOPAGO_ACCESS_TOKEN=seu_token
+
+FRONTEND_URL=http://localhost:5173
+```
+
+### Obter credenciais Mercado Pago
+1. Acesse https://www.mercadopago.com.br/developers
+2. Crie uma aplicação
+3. Copie o Access Token (para backend)
+4. Copie a Public Key (para frontend)
 ```
 
 ## 🎨 Customização
@@ -326,10 +367,10 @@ npm install react@latest
 cat README.md
 
 # Setup
-cat SETUP.md
+cat docs/CONFIGURACAO_PRODUCAO.md
 
 # Quick start
-cat QUICKSTART.md
+cat docs/COMANDOS.md
 
 # Arquitetura
 cat ARCHITECTURE.md
@@ -368,14 +409,14 @@ alias preview="npm run preview"
 
 ### Documentação Local
 - README.md - ../README.md
-- SETUP.md, QUICKSTART.md, ARCHITECTURE.md
+- docs/CONFIGURACAO_PRODUCAO.md, docs/COMANDOS.md, docs/ARCHITECTURE.md
 - OFFLINE_MODE.md, MERCADOPAGO_INTEGRATION.md
 
 ### Documentação online
 - React: https://react.dev
 - TypeScript: https://typescriptlang.org
 - Vite: https://vitejs.dev
-- Supabase: https://supabase.com/docs
+- PostgreSQL: https://www.postgresql.org/docs/
 - Mercado Pago: https://mercadopago.com.br/developers
 
 ### Comunidades

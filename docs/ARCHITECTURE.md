@@ -6,75 +6,79 @@ Este documento descreve a arquitetura e estrutura do sistema de inscrições par
 
 O sistema segue uma arquitetura cliente-servidor com:
 - **Frontend:** React + TypeScript + Vite
-- **Backend:** Node.js (já preparado pelo usuário)
-- **Banco de Dados:** PostgreSQL via Supabase
+- **Backend:** Node.js + Express + TypeScript
+- **Banco de Dados:** PostgreSQL (pode ser local ou via Supabase)
 - **Pagamentos:** Mercado Pago API
 
 ## 🏗️ Estrutura de Pastas
 
 ```
 eventos/
-├── database/               # Scripts SQL do banco de dados
-│   ├── schema.sql         # Definição das tabelas
-│   ├── seed.sql           # Dados de exemplo
-│   └── policies.sql       # Políticas de segurança RLS
+├── backend/               # Backend Node.js/Express
+│   ├── src/              # Código fonte TypeScript
+│   ├── database/         # Migrações e seeds
+│   │   ├── migrations/   # Migrações versionadas
+│   │   └── seeds/        # Dados iniciais
+│   └── package.json
 │
-├── public/                 # Arquivos estáticos públicos
-│   └── vite.svg
+├── public/               # Arquivos estáticos públicos
+│   └── favicon.png
 │
 ├── src/
-│   ├── assets/            # Recursos (imagens, ícones)
-│   │   └── react.svg
+│   ├── assets/          # Recursos (imagens, ícones)
+│   │   └── logo.png
 │   │
-│   ├── components/        # Componentes reutilizáveis
-│   │   ├── Header.tsx     # Cabeçalho da aplicação
-│   │   ├── Header.css
-│   │   ├── Footer.tsx     # Rodapé da aplicação
-│   │   ├── Footer.css
-│   │   ├── Loading.tsx    # Componente de carregamento
-│   │   ├── Loading.css
-│   │   ├── ProtectedRoute.tsx  # HOC para rotas protegidas
-│   │   
-│   ├── contexts/          # Context API para estado global
-│   │   ├── AuthContext.tsx       # Autenticação e usuário
-│   │   ├── EventContext.tsx      # Gerenciamento de eventos
-│   │   └── RegistrationContext.tsx # Gerenciamento de inscrições
+│   ├── components/      # Componentes reutilizáveis
+│   │   ├── Header.tsx
+│   │   ├── Footer.tsx
+│   │   ├── Loading.tsx
+│   │   ├── ProtectedRoute.tsx
+│   │   ├── PixPayment.tsx
+│   │   ├── CreditCardPayment.tsx
+│   │   └── CreditCardVisual.tsx
 │   │
-│   ├── pages/             # Páginas da aplicação
-│   │   ├── Home.tsx       # Página inicial do evento
-│   │   ├── Home.css
-│   │   ├── Registration.tsx  # Inscrição em 2 etapas
-│   │   ├── Registration.css
-│   │   ├── Login.tsx      # Login administrativo
-│   │   ├── Login.css
-│   │   ├── Admin.tsx      # Painel administrativo
-│   │   └── Admin.css
+│   ├── contexts/        # Context API para estado global
+│   │   ├── AuthContext.tsx
+│   │   ├── EventContext.tsx
+│   │   ├── RegistrationContext.tsx
+│   │   └── SettingsContext.tsx
 │   │
-│   ├── services/          # Serviços de integração
-│   │   ├── api.ts         # Cliente HTTP (Axios)
-│   │   └── supabase.ts    # Cliente Supabase
+│   ├── pages/           # Páginas da aplicação
+│   │   ├── Home.tsx
+│   │   ├── Registration.tsx
+│   │   ├── Confirmation.tsx
+│   │   ├── MeuIngresso.tsx
+│   │   ├── Login.tsx
+│   │   ├── Admin.tsx
+│   │   ├── AdminSettings.tsx
+│   │   └── CheckIn.tsx
 │   │
-│   ├── types/             # Definições TypeScript
-│   │   └── index.ts       # Interfaces e tipos
+│   ├── services/        # Serviços de integração
+│   │   ├── api.ts       # Cliente HTTP (Axios)
+│   │   ├── apiSelector.ts
+│   │   └── mercadopago-config.ts
 │   │
-│   ├── App.tsx            # Componente raiz com rotas
-│   ├── App.css            # Estilos globais da aplicação
-│   ├── main.tsx           # Entry point
-│   ├── index.css          # CSS global e variáveis
-│   └── vite-env.d.ts      # Tipos para variáveis de ambiente
+│   ├── types/           # Definições TypeScript
+│   │   └── index.ts
+│   │
+│   ├── utils/           # Utilitários
+│   │   ├── formatPrice.ts
+│   │   └── generateTestData.ts
+│   │
+│   ├── mocks/           # Dados mockados (modo offline)
+│   │   ├── api.ts
+│   │   └── data.ts
+│   │
+│   ├── App.tsx          # Componente raiz com rotas
+│   ├── main.tsx         # Entry point
+│   └── index.css        # CSS global e variáveis
 │
-├── .gitignore             # Arquivos ignorados pelo Git
-├── env.example            # Exemplo de variáveis de ambiente
-├── eslint.config.js       # Configuração do ESLint
-├── index.html             # HTML principal
-├── package.json           # Dependências e scripts
-├── tsconfig.json          # Configuração TypeScript
-├── tsconfig.app.json      # Config TS para aplicação
-├── tsconfig.node.json     # Config TS para Node
-├── vite.config.ts         # Configuração Vite
-├── README.md              # Documentação principal
-├── SETUP.md               # Guia de configuração
-└── ARCHITECTURE.md        # Este arquivo
+├── docs/                # Documentação
+├── .gitignore
+├── env.example
+├── package.json
+├── vite.config.ts
+└── README.md
 ```
 
 ## 🔄 Fluxo de Dados
@@ -92,7 +96,7 @@ Usuário → Home → Registration (Step 1) → API Backend → Database
 2. Clica em "Inscrever-se"
 3. **Etapa 1:** Preenche dados pessoais
 4. Dados são enviados ao backend via API
-5. Backend salva no banco de dados (Supabase)
+5. Backend salva no banco de dados PostgreSQL (local ou Supabase)
 6. **Etapa 2:** Escolhe método de pagamento
 7. Frontend cria requisição de pagamento via Mercado Pago
 8. Backend processa pagamento
@@ -175,11 +179,8 @@ Cliente HTTP centralizado usando Axios com:
 - Funções tipadas para cada endpoint
 - Tratamento de erros
 
-#### supabase.ts
-Cliente Supabase para:
-- Queries diretas ao banco (opcional)
-- Realtime subscriptions (futuro)
-- Storage (futuro)
+#### apiSelector.ts
+Seletor de API que escolhe entre API real (backend) e API mockada (modo offline).
 
 ## 🎨 Sistema de Design
 
@@ -220,11 +221,11 @@ Texto:      #333333  (Cinza escuro)
 - SQL injection prevention
 - XSS protection
 
-### Database (Supabase)
-- Row Level Security (RLS)
-- Políticas de acesso por role
+### Database (PostgreSQL)
+- Migrações versionadas
 - Índices para performance
-- Triggers para auditoria
+- Constraints de integridade
+- Validação de dados no nível do banco
 
 ## 📊 Modelo de Dados
 
@@ -249,7 +250,6 @@ Registration {
   email: string
   phone: string
   cpf: string
-  address: text
   payment_status: enum
   payment_id?: string
   checked_in: boolean
@@ -326,15 +326,15 @@ src/
 
 ### Plataformas
 - Frontend: Vercel, Netlify, GitHub Pages
-- Backend: Heroku, Railway, AWS
-- Database: Supabase (já em produção)
+- Backend: Heroku, Railway, AWS, DigitalOcean
+- Database: PostgreSQL (local ou gerenciado)
 
 ## 📚 Referências
 
 - [React Docs](https://react.dev/)
 - [TypeScript Docs](https://www.typescriptlang.org/)
 - [Vite Docs](https://vitejs.dev/)
-- [Supabase Docs](https://supabase.com/docs)
+- [PostgreSQL Docs](https://www.postgresql.org/docs/)
 - [Mercado Pago Docs](https://www.mercadopago.com.br/developers)
 
 ---

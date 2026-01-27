@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Event, Registration, PaymentData, EventSettings } from '../types';
+import type { Event, Registration, PaymentData, EventSettings, EventDate, RegistrationQuestion, RegistrationAnswer } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -51,9 +51,26 @@ export const updateEventSettings = async (eventId: string, settings: Partial<Eve
   return response.data;
 };
 
+// Datas do Evento
+export const getEventDates = async (eventId: string): Promise<EventDate[]> => {
+  const response = await api.get(`/events/${eventId}/dates`);
+  return response.data;
+};
+
+export const updateEventDates = async (eventId: string, dates: (string | Date)[]): Promise<EventDate[]> => {
+  const response = await api.put(`/events/${eventId}/dates`, { dates });
+  return response.data;
+};
+
 // Inscrições
-export const createRegistration = async (registration: Omit<Registration, 'id' | 'created_at' | 'checked_in' | 'payment_status'>): Promise<Registration> => {
-  const response = await api.post('/registrations', registration);
+export const createRegistration = async (
+  registration: Omit<Registration, 'id' | 'created_at' | 'checked_in' | 'payment_status'>,
+  answers?: Omit<RegistrationAnswer, 'id' | 'registration_id' | 'created_at' | 'updated_at'>[]
+): Promise<Registration> => {
+  const response = await api.post('/registrations', {
+    ...registration,
+    answers: answers || []
+  });
   return response.data;
 };
 
@@ -69,7 +86,38 @@ export const getRegistrationById = async (id: string): Promise<Registration> => 
   return response.data;
 };
 
+// Verificar status de pagamento (rota pública - usado pelo botão "Já Paguei")
+export const checkPaymentStatus = async (id: string): Promise<Registration> => {
+  const response = await api.get(`/registrations/${id}/check-payment`);
+  return response.data;
+};
+
 export const updateRegistration = async (id: string, data: Partial<Registration>): Promise<Registration> => {
+  // Se for atualizar APENAS o método de pagamento selecionado (sem outros campos), usar rota pública
+  const hasPaymentMethod = 'payment_method' in data || 'selected_payment_method' in data;
+  const hasOtherFields = Object.keys(data).some(key => 
+    key !== 'payment_method' && 
+    key !== 'selected_payment_method' &&
+    key !== 'id' &&
+    key !== 'created_at' &&
+    key !== 'updated_at'
+  );
+  
+  // Se tiver apenas método de pagamento e nenhum outro campo, usar rota pública
+  if (hasPaymentMethod && !hasOtherFields) {
+    const paymentMethod = data.selected_payment_method || data.payment_method;
+    
+    if (paymentMethod === null || paymentMethod === undefined) {
+      throw new Error('Método de pagamento não pode ser null ou undefined');
+    }
+    
+    const response = await api.patch(`/registrations/${id}/payment-method`, { 
+      payment_method: paymentMethod 
+    });
+    return response.data;
+  }
+  
+  // Caso contrário, usar rota protegida (admin) - permite atualizar qualquer campo, incluindo payment_status
   const response = await api.put(`/registrations/${id}`, data);
   return response.data;
 };
@@ -136,6 +184,35 @@ export const login = async (email: string, password: string): Promise<{ token: s
 export const verifyToken = async (): Promise<any> => {
   const response = await api.get('/auth/verify');
   return response.data;
+};
+
+// Perguntas de Inscrição
+export const getRegistrationQuestions = async (eventId: string): Promise<RegistrationQuestion[]> => {
+  const response = await api.get(`/registration-questions/event/${eventId}`);
+  return response.data;
+};
+
+export const getRegistrationQuestion = async (id: string): Promise<RegistrationQuestion> => {
+  const response = await api.get(`/registration-questions/${id}`);
+  return response.data;
+};
+
+export const createRegistrationQuestion = async (question: Omit<RegistrationQuestion, 'id' | 'created_at' | 'updated_at'>): Promise<RegistrationQuestion> => {
+  const response = await api.post('/registration-questions', question);
+  return response.data;
+};
+
+export const updateRegistrationQuestion = async (id: string, question: Partial<Omit<RegistrationQuestion, 'id' | 'event_id' | 'created_at' | 'updated_at'>>): Promise<RegistrationQuestion> => {
+  const response = await api.put(`/registration-questions/${id}`, question);
+  return response.data;
+};
+
+export const deleteRegistrationQuestion = async (id: string): Promise<void> => {
+  await api.delete(`/registration-questions/${id}`);
+};
+
+export const reorderRegistrationQuestions = async (eventId: string, questionIds: string[]): Promise<void> => {
+  await api.put(`/registration-questions/event/${eventId}/reorder`, { questionIds });
 };
 
 export default api;

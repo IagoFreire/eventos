@@ -6,14 +6,6 @@ interface RegistrationFormData {
   email: string;
   phone: string;
   cpf: string;
-  address: string;
-  cep?: string;
-  street?: string;
-  number?: string;
-  complement?: string;
-  neighborhood?: string;
-  city?: string;
-  state?: string;
   event_id: string;
 }
 
@@ -32,14 +24,6 @@ const initialFormData: RegistrationFormData = {
   email: '',
   phone: '',
   cpf: '',
-  address: '',
-  cep: '',
-  street: '',
-  number: '',
-  complement: '',
-  neighborhood: '',
-  city: '',
-  state: '',
   event_id: '',
 };
 

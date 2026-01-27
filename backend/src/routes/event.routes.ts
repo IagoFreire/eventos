@@ -24,11 +24,13 @@ router.get('/', EventController.getAll);
 router.get('/:id', EventController.getById);
 router.get('/:id/stats', EventController.getStats);
 router.get('/:id/settings', EventController.getSettings);
+router.get('/:id/dates', EventController.getDates);
 
 // Rotas protegidas (admin apenas)
 router.post('/', authenticateToken, requireAdmin, eventValidation, validate, EventController.create);
 router.put('/:id', authenticateToken, requireAdmin, EventController.update);
 router.delete('/:id', authenticateToken, requireAdmin, EventController.delete);
 router.put('/:id/settings', authenticateToken, requireAdmin, settingsValidation, validate, EventController.updateSettings);
+router.put('/:id/dates', authenticateToken, requireAdmin, EventController.updateDates);
 
 export default router;

@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { Html5Qrcode } from 'html5-qrcode';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/apiSelector';
-import { ArrowLeft, Camera, CheckCircle, X, AlertCircle, Loader2, User, Mail, Phone, Calendar, Clock, MapPin } from 'lucide-react';
+import { ArrowLeft, Camera, CheckCircle, X, AlertCircle, Loader2, User, Mail, Phone, Calendar, Clock } from 'lucide-react';
 import type { Registration } from '../types';
 
 const CheckIn: React.FC = () => {
@@ -391,15 +391,6 @@ const CheckIn: React.FC = () => {
                     <p className="text-sm text-gray-600 mb-1">CPF</p>
                     <p className="text-gray-800 font-medium">{lastScanned.cpf || 'Não informado'}</p>
                   </div>
-                  {lastScanned.address && (
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        Endereço
-                      </p>
-                      <p className="text-gray-800 font-medium">{lastScanned.address}</p>
-                    </div>
-                  )}
                 </div>
               </div>
 

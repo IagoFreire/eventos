@@ -112,7 +112,6 @@ O sistema já vem com 6 inscrições de exemplo com diferentes status:
    - Email: teste@email.com
    - Telefone: (11) 98765-4321
    - CPF: 123.456.789-00
-   - Endereço: Rua Teste, 123
 4. Clique em "Próximo"
 5. Escolha forma de pagamento
 6. Clique em "Confirmar Pagamento"
@@ -188,7 +187,6 @@ export const mockRegistrations: Registration[] = [
     email: 'novo@email.com',
     phone: '(11) 98765-0000',
     cpf: '000.000.000-00',
-    address: 'Novo endereço',
     payment_status: 'approved',
     checked_in: false,
     created_at: new Date().toISOString(),

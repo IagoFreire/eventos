@@ -1,33 +1,40 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useReactToPrint } from 'react-to-print';
 import { useRegistration } from '../contexts/RegistrationContext';
 import { useEvent } from '../contexts/EventContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { api } from '../services/apiSelector';
-import { ArrowLeft, ArrowRight, Check, User, Mail, Phone, Calendar, CheckCircle, Download, Printer, MapPin, Clock, QrCode, Home, Sparkles } from 'lucide-react';
+import type { RegistrationQuestion, RegistrationAnswer } from '../types';
+import { ArrowLeft, ArrowRight, Check, User, Mail, Phone, Calendar, CheckCircle, Download, Printer, MapPin, Clock, QrCode, Home, CreditCard, MessageCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import PixPayment from '../components/PixPayment';
 import CreditCardPayment from '../components/CreditCardPayment';
-import { generateTestData } from '../utils/generateTestData';
 import { formatPrice } from '../utils/formatPrice';
-import { searchCep, formatCep } from '../services/cep';
+import { publicKey } from '../services/mercadopago-config';
 
 const Registration: React.FC = () => {
   const navigate = useNavigate();
   const { formData, setFormData, currentStep, setCurrentStep, registrationId, setRegistrationId } = useRegistration();
   const { currentEvent } = useEvent();
+  const { settings } = useSettings();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pixData, setPixData] = useState<any>(null);
-  const [paymentId, setPaymentId] = useState<string | null>(null);
   const [showPixPayment, setShowPixPayment] = useState(false);
   const [showCreditCardPayment, setShowCreditCardPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit_card'>('pix');
-  const [loadingCep, setLoadingCep] = useState(false);
   const ticketRef = useRef<HTMLDivElement>(null);
+  const [questions, setQuestions] = useState<RegistrationQuestion[]>([]);
+  const [questionAnswers, setQuestionAnswers] = useState<Record<string, string | string[]>>({});
+  const [loadingQuestions, setLoadingQuestions] = useState(true);
+  const isCheckingPaymentRef = useRef(false);
+  const lastErrorMessageRef = useRef<string>('');
+  const paymentConfirmedRef = useRef(false); // Evitar mensagens duplicadas
+  const [showWhatsAppContact, setShowWhatsAppContact] = useState(false);
 
   const event = currentEvent || {
     id: '1',
@@ -40,26 +47,28 @@ const Registration: React.FC = () => {
     max_participants: 100,
   };
 
+  // Carregar perguntas quando o componente montar
+  useEffect(() => {
+    const loadQuestions = async () => {
+      setLoadingQuestions(true);
+      try {
+        const loadedQuestions = await api.getRegistrationQuestions(event.id);
+        setQuestions(loadedQuestions);
+      } catch (error) {
+        console.error('Erro ao carregar perguntas:', error);
+        // Não é crítico se não conseguir carregar perguntas
+      } finally {
+        setLoadingQuestions(false);
+      }
+    };
+    loadQuestions();
+  }, [event.id]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const newFormData = {
+    setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    };
-
-    // Atualiza o endereço completo automaticamente quando campos de endereço mudam
-    if (['street', 'number', 'complement', 'neighborhood', 'city', 'state', 'cep'].includes(e.target.name)) {
-      const parts: string[] = [];
-      if (newFormData.street) parts.push(newFormData.street);
-      if (newFormData.number) parts.push(`nº ${newFormData.number}`);
-      if (newFormData.complement) parts.push(newFormData.complement);
-      if (newFormData.neighborhood) parts.push(newFormData.neighborhood);
-      if (newFormData.city) parts.push(newFormData.city);
-      if (newFormData.state) parts.push(newFormData.state);
-      if (newFormData.cep) parts.push(`CEP: ${newFormData.cep}`);
-      newFormData.address = parts.length > 0 ? parts.join(', ') : '';
-    }
-
-    setFormData(newFormData);
+    });
   };
 
   // Função para buscar inscrição pendente quando o email for digitado
@@ -77,7 +86,6 @@ const Registration: React.FC = () => {
       return;
     }
 
-    setLoadingCep(true);
     try {
       const pendingRegistration = await api.getPendingRegistrationByEmail(email, event.id);
 
@@ -89,7 +97,6 @@ const Registration: React.FC = () => {
           email: pendingRegistration.email,
           phone: pendingRegistration.phone,
           cpf: pendingRegistration.cpf,
-          address: pendingRegistration.address || '',
         });
 
         // Se tiver registration ID, atualiza
@@ -102,119 +109,10 @@ const Registration: React.FC = () => {
     } catch (error: any) {
       // Ignora erros silenciosamente - não é um problema se não encontrar
       console.log('Nenhuma inscrição pendente encontrada para este email');
-    } finally {
-      setLoadingCep(false);
     }
   };
 
-  // Função para buscar CEP
-  const handleCepSearch = async (cep: string, preserveData?: Partial<typeof formData>) => {
-    const cleanCep = cep.replace(/\D/g, '');
 
-    // Só busca se tiver 8 dígitos
-    if (cleanCep.length !== 8) {
-      return;
-    }
-
-    setLoadingCep(true);
-    try {
-      const cepData = await searchCep(cleanCep);
-
-      if (cepData) {
-        setFormData((prev) => {
-          const updatedData = {
-            ...prev,
-            ...preserveData, // Preserva dados passados (como nome, email, etc)
-            cep: formatCep(cleanCep),
-            street: cepData.logradouro || '',
-            neighborhood: cepData.bairro || '',
-            city: cepData.localidade || '',
-            state: cepData.uf || '',
-            complement: cepData.complemento || '',
-          };
-
-          // Atualiza o endereço completo
-          const parts: string[] = [];
-          if (updatedData.street) parts.push(updatedData.street);
-          if (updatedData.number) parts.push(`nº ${updatedData.number}`);
-          if (updatedData.complement) parts.push(updatedData.complement);
-          if (updatedData.neighborhood) parts.push(updatedData.neighborhood);
-          if (updatedData.city) parts.push(updatedData.city);
-          if (updatedData.state) parts.push(updatedData.state);
-          if (updatedData.cep) parts.push(`CEP: ${updatedData.cep}`);
-          updatedData.address = parts.length > 0 ? parts.join(', ') : '';
-
-          return updatedData;
-        });
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao buscar CEP', { autoClose: 3000 });
-    } finally {
-      setLoadingCep(false);
-    }
-  };
-
-  // Função para formatar CEP enquanto digita
-  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatCep(e.target.value);
-    setFormData({
-      ...formData,
-      cep: formatted,
-    });
-
-    // Busca automaticamente quando tiver 8 dígitos
-    const cleanCep = formatted.replace(/\D/g, '');
-    if (cleanCep.length === 8) {
-      handleCepSearch(cleanCep);
-    }
-  };
-
-  // Função para combinar campos de endereço em um endereço completo
-  const buildFullAddress = (): string => {
-    const parts: string[] = [];
-
-    if (formData.street) parts.push(formData.street);
-    if (formData.number) parts.push(`nº ${formData.number}`);
-    if (formData.complement) parts.push(formData.complement);
-    if (formData.neighborhood) parts.push(formData.neighborhood);
-    if (formData.city) parts.push(formData.city);
-    if (formData.state) parts.push(formData.state);
-    if (formData.cep) parts.push(`CEP: ${formData.cep}`);
-
-    return parts.length > 0 ? parts.join(', ') : formData.address || '';
-  };
-
-  // Função para preencher dados de teste
-  const handleFillTestData = async () => {
-    const testData = generateTestData();
-    const randomNumber = Math.floor(1 + Math.random() * 9999);
-
-    // Preenche os dados básicos primeiro
-    const basicData = {
-      name: testData.name,
-      email: testData.email,
-      phone: testData.phone,
-      cpf: testData.cpf,
-      cep: testData.cep,
-      number: randomNumber.toString(),
-    };
-
-    setFormData({
-      ...formData,
-      ...basicData,
-    });
-
-    // Busca o CEP automaticamente para preencher os campos de endereço
-    // Passa os dados básicos para preservá-los durante a busca
-    if (testData.cep) {
-      try {
-        await handleCepSearch(testData.cep.replace(/\D/g, ''), basicData);
-      } catch (err) {
-        // Se falhar a busca, apenas mostra o CEP preenchido
-        console.warn('Erro ao buscar CEP:', err);
-      }
-    }
-  };
 
   const validateStep1 = () => {
     if (!formData.name || !formData.email || !formData.phone || !formData.cpf) {
@@ -228,6 +126,17 @@ const Registration: React.FC = () => {
       return false;
     }
 
+    // Validar perguntas obrigatórias
+    for (const question of questions) {
+      if (question.is_required) {
+        const answer = questionAnswers[question.id];
+        if (!answer || (Array.isArray(answer) && answer.length === 0) || (typeof answer === 'string' && answer.trim() === '')) {
+          setError(`Por favor, responda a pergunta: ${question.question_text}`);
+          return false;
+        }
+      }
+    }
+
     setError('');
     return true;
   };
@@ -239,14 +148,37 @@ const Registration: React.FC = () => {
         setError(''); // Limpar erro anterior
 
         try {
-          // Combina os campos de endereço antes de enviar
-          const fullAddress = buildFullAddress();
+          // Preparar respostas das perguntas
+          const answers: Omit<RegistrationAnswer, 'id' | 'registration_id' | 'created_at' | 'updated_at'>[] = questions
+            .filter(q => questionAnswers[q.id] !== undefined)
+            .map(question => {
+              const answer = questionAnswers[question.id];
+              if (question.question_type === 'text') {
+                return {
+                  question_id: question.id,
+                  answer_text: typeof answer === 'string' ? answer : '',
+                  answer_options: []
+                };
+              } else if (question.question_type === 'single_choice') {
+                return {
+                  question_id: question.id,
+                  answer_text: typeof answer === 'string' ? answer : '',
+                  answer_options: []
+                };
+              } else {
+                // multiple_choice
+                return {
+                  question_id: question.id,
+                  answer_text: undefined,
+                  answer_options: Array.isArray(answer) ? answer : []
+                };
+              }
+            });
 
           const registration = await api.createRegistration({
             ...formData,
-            address: fullAddress || formData.address,
             event_id: event.id,
-          });
+          }, answers);
           setRegistrationId(registration.id);
           setCurrentStep(2);
         } catch (err: any) {
@@ -285,6 +217,7 @@ const Registration: React.FC = () => {
 
   const handlePreviousStep = () => {
     setCurrentStep(1);
+    setShowWhatsAppContact(false); // Resetar estado ao voltar
   };
 
   const handlePayment = async () => {
@@ -293,6 +226,14 @@ const Registration: React.FC = () => {
       setError(errorMsg);
       toast.error(errorMsg);
       return;
+    }
+
+    // Atualizar selected_payment_method quando o usuário confirma o pagamento
+    try {
+      await api.updateRegistration(registrationId, { selected_payment_method: paymentMethod });
+    } catch (err: any) {
+      // Não bloquear o fluxo se falhar, apenas logar o erro
+      console.error('Erro ao salvar método de pagamento selecionado:', err);
     }
 
     // Se for cartão de crédito, mostrar formulário
@@ -322,11 +263,6 @@ const Registration: React.FC = () => {
 
       const payment = await api.createPayment(paymentData);
       console.log('✅ Pagamento criado:', payment);
-
-      // Salvar payment_id para verificação automática
-      if (payment.payment_id) {
-        setPaymentId(payment.payment_id);
-      }
 
       // Se tiver dados do PIX (QR Code), mostrar componente de pagamento PIX
       if (payment.pix && payment.pix.qr_code) {
@@ -380,6 +316,15 @@ const Registration: React.FC = () => {
     }
 
     try {
+      // Garantir que selected_payment_method está salvo
+      if (paymentMethod) {
+        try {
+          await api.updateRegistration(registrationId, { selected_payment_method: paymentMethod });
+        } catch (err: any) {
+          console.error('Erro ao salvar método de pagamento selecionado:', err);
+        }
+      }
+
       // Atualizar status da inscrição para aprovado
       await api.updateRegistration(registrationId, {
         payment_status: 'approved'
@@ -402,76 +347,137 @@ const Registration: React.FC = () => {
       return;
     }
 
+    // Evitar múltiplas verificações simultâneas e mensagens duplicadas
+    if (isCheckingPaymentRef.current || paymentConfirmedRef.current) {
+      return;
+    }
+
+    // Detectar se está em produção (chave pública não começa com TEST-)
+    const isProduction = publicKey && !publicKey.startsWith('TEST-') && publicKey.startsWith('APP_USR-');
+
+    isCheckingPaymentRef.current = true;
     setLoading(true);
+
     try {
-      // Buscar a inscrição atual para verificar o status
-      const registration = await api.getRegistrationById(registrationId);
+      // Tentar verificar até 3 vezes com delay (para dar tempo ao webhook atualizar)
+      let attempts = 0;
+      const maxAttempts = 3;
+      let registration;
 
-      // Se já estiver aprovado no banco (atualizado pelo webhook), apenas avançar
-      if (registration.payment_status === 'approved') {
-        console.log('✅ Pagamento já está aprovado no banco de dados');
-        toast.success('✅ Pagamento confirmado com sucesso!');
-        setCurrentStep(3);
-        setLoading(false);
-        return;
+      while (attempts < maxAttempts) {
+        attempts++;
+        console.log(`🔍 Verificando status no banco de dados (tentativa ${attempts}/${maxAttempts})...`);
+        
+        // Usar rota pública específica para verificação de pagamento (com logs detalhados)
+        registration = await api.checkPaymentStatus(registrationId);
+
+        // Se já estiver aprovado no banco, avançar imediatamente
+        if (registration.payment_status === 'approved') {
+          // Garantir que selected_payment_method está salvo
+          if (paymentMethod && !registration.selected_payment_method) {
+            try {
+              await api.updateRegistration(registrationId, { selected_payment_method: paymentMethod });
+            } catch (err: any) {
+              console.error('Erro ao salvar método de pagamento selecionado:', err);
+            }
+          }
+
+          // Evitar mensagem duplicada
+          if (!paymentConfirmedRef.current) {
+            console.log('✅ Pagamento já está aprovado no banco de dados');
+            toast.success('✅ Pagamento confirmado com sucesso!');
+            paymentConfirmedRef.current = true;
+          }
+          setShowWhatsAppContact(false); // Esconder mensagem de WhatsApp se pagamento foi confirmado
+          setCurrentStep(3);
+          setLoading(false);
+          isCheckingPaymentRef.current = false;
+          return;
+        }
+
+        // Se não for a última tentativa, aguardar um pouco antes de tentar novamente
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Aguardar 2 segundos
+        }
       }
 
-      // Se não tiver payment_id, não pode verificar
-      if (!registration.payment_id) {
-        toast.error('Pagamento não encontrado. Por favor, tente novamente.');
-        setLoading(false);
-        return;
-      }
-
-      // Verificar o status real do pagamento no Mercado Pago
-      const paymentStatus = await api.getPaymentStatus(registration.payment_id);
-
-      console.log('📊 Status do pagamento:', paymentStatus);
-
-      // Se o pagamento foi aprovado, atualizar e avançar
-      if (paymentStatus.status === 'approved') {
-        await api.updateRegistration(registrationId, {
-          payment_status: 'approved'
-        });
-
-        toast.success('✅ Pagamento confirmado com sucesso!');
-        setCurrentStep(3);
-      } else if (paymentStatus.status === 'pending') {
-        // Pagamento ainda está pendente
-        toast.warning('⏳ Pagamento ainda não foi confirmado. Aguarde alguns instantes e tente novamente.', {
-          autoClose: 5000,
-        });
-      } else if (paymentStatus.status === 'rejected') {
-        // Pagamento foi rejeitado
-        toast.error('❌ Pagamento foi rejeitado. Por favor, tente novamente com outro método de pagamento.');
-      } else {
-        // Outro status (in_process, etc)
-        toast.info(`ℹ️ Status do pagamento: ${paymentStatus.status}. Aguarde a confirmação.`, {
-          autoClose: 5000,
-        });
-      }
+      // Se após todas as tentativas ainda não estiver aprovado
+      // Mostrar opção de contato via WhatsApp
+      setShowWhatsAppContact(true);
+      toast.info('⏳ Pagamento ainda não foi confirmado. Você pode enviar o comprovante pelo WhatsApp.', {
+        autoClose: 8000,
+      });
     } catch (error: any) {
       console.error('❌ Erro ao verificar pagamento:', error);
+      console.error('📋 Detalhes do erro:', {
+        message: error?.message,
+        response: error?.response?.data,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        code: error?.code,
+        config: {
+          url: error?.config?.url,
+          method: error?.config?.method,
+          baseURL: error?.config?.baseURL,
+        }
+      });
 
-      // Se não conseguir verificar, oferece opção de confirmar manualmente (para casos de teste)
-      const shouldProceed = window.confirm(
-        'Não foi possível verificar o status do pagamento automaticamente. ' +
-        'Deseja confirmar manualmente? (Use apenas em modo de teste)'
-      );
+      // Verificar se é erro de CORS ou rede
+      const isCorsError = error?.code === 'ERR_NETWORK' || 
+                         error?.message?.includes('CORS') || 
+                         error?.message?.includes('Network Error') ||
+                         !error?.response;
 
-      if (shouldProceed) {
-        try {
-          await api.updateRegistration(registrationId, {
-            payment_status: 'approved'
+      // Evitar mostrar a mesma mensagem repetidamente
+      const errorMessage = error?.message || 'Erro desconhecido';
+      if (lastErrorMessageRef.current === errorMessage) {
+        // Mesma mensagem de erro - não mostrar novamente
+        setLoading(false);
+        isCheckingPaymentRef.current = false;
+        return;
+      }
+      lastErrorMessageRef.current = errorMessage;
+
+      // Mensagem específica para erros de CORS/rede
+      if (isCorsError) {
+        toast.error('❌ Erro de conexão. Verifique sua internet e tente novamente. Se o problema persistir, pode ser um problema de configuração do servidor.', {
+          autoClose: 10000,
+        });
+        console.error('🚨 Erro de CORS/Rede detectado - verifique configuração do servidor');
+      } else if (error?.response?.status === 403) {
+        toast.error('❌ Acesso negado. Verifique as configurações de CORS do servidor.', {
+          autoClose: 10000,
+        });
+      } else {
+        // Em produção, mostrar opção de contato via WhatsApp
+        if (isProduction) {
+          setShowWhatsAppContact(true);
+          toast.info('⏳ O sistema está verificando o pagamento automaticamente. Se você já pagou, pode enviar o comprovante pelo WhatsApp.', {
+            autoClose: 8000,
           });
-          toast.warning('⚠️ Pagamento confirmado manualmente (modo de teste)');
-          setCurrentStep(3);
-        } catch (updateError) {
-          toast.error('Erro ao confirmar pagamento. Tente novamente.');
+        } else {
+          // Em desenvolvimento/teste, oferece opção de confirmar manualmente
+          const shouldProceed = window.confirm(
+            'Não foi possível verificar o status do pagamento automaticamente. ' +
+            'Deseja confirmar manualmente? (Use apenas em modo de teste)'
+          );
+
+          if (shouldProceed) {
+            try {
+              await api.updateRegistration(registrationId, {
+                payment_status: 'approved'
+              });
+              toast.warning('⚠️ Pagamento confirmado manualmente (modo de teste)');
+              setCurrentStep(3);
+            } catch (updateError) {
+              toast.error('Erro ao confirmar pagamento. Tente novamente.');
+            }
+          }
         }
       }
     } finally {
       setLoading(false);
+      isCheckingPaymentRef.current = false;
     }
   };
 
@@ -588,17 +594,10 @@ const Registration: React.FC = () => {
       email: '',
       phone: '',
       cpf: '',
-      address: '',
-      cep: '',
-      street: '',
-      number: '',
-      complement: '',
-      neighborhood: '',
-      city: '',
-      state: '',
       event_id: '',
     });
     setRegistrationId(null);
+    paymentConfirmedRef.current = false; // Resetar flag de confirmação
     navigate('/');
   };
 
@@ -620,6 +619,50 @@ const Registration: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  // Formatar número de WhatsApp (remover caracteres especiais e adicionar código do país se necessário)
+  const formatPhoneForWhatsApp = (phone: string): string => {
+    if (!phone) return '';
+    
+    // Remove todos os caracteres não numéricos
+    let cleaned = phone.replace(/\D/g, '');
+    
+    // Se o número começar com 0, remove (ex: 011 vira 11)
+    if (cleaned.startsWith('0')) {
+      cleaned = cleaned.substring(1);
+    }
+    
+    // Se não começar com 55 (código do Brasil), adiciona
+    if (!cleaned.startsWith('55')) {
+      cleaned = '55' + cleaned;
+    }
+    
+    return cleaned;
+  };
+
+  // Abrir WhatsApp com mensagem pré-formatada
+  const openWhatsApp = () => {
+    // Buscar telefone marcado para suporte PIX, ou usar o primeiro disponível
+    const pixSupportPhone = settings?.contact_phones?.find(cp => cp.use_for_pix_support);
+    const churchPhone = pixSupportPhone?.phone || settings?.contact_phones?.[0]?.phone || settings?.church_contact_phone;
+    
+    if (!churchPhone) {
+      toast.error('WhatsApp de contato não configurado. Entre em contato com a administração.');
+      return;
+    }
+
+    const formattedPhone = formatPhoneForWhatsApp(churchPhone);
+    const message = encodeURIComponent(
+      `Olá! Realizei o pagamento PIX para o evento "${event.title}" mas não consegui confirmar no sistema.\n\n` +
+      `Por favor, posso enviar o comprovante?\n\n` +
+      `Meu nome: ${formData.name}\n` +
+      `CPF: ${formData.cpf}\n` +
+      `Email: ${formData.email}`
+    );
+    
+    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
   };
 
 
@@ -690,18 +733,7 @@ const Registration: React.FC = () => {
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-[#E8DCC4] shadow-lg">
           {currentStep === 1 && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center mb-2">
-                <h2 className="text-2xl text-gray-800">Informações Pessoais</h2>
-                <button
-                  type="button"
-                  onClick={handleFillTestData}
-                  className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors text-sm font-medium"
-                  title="Preencher com dados de teste (CPF válido)"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Preencher Teste
-                </button>
-              </div>
+              <h2 className="text-2xl text-gray-800 mb-2">Informações Pessoais</h2>
 
               <div>
                 <label className="block text-gray-700 mb-2">
@@ -717,9 +749,6 @@ const Registration: React.FC = () => {
                   className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
                   placeholder="seu@email.com"
                 />
-                {loadingCep && (
-                  <p className="text-xs text-gray-500 mt-1">Buscando inscrição pendente...</p>
-                )}
               </div>
 
               <div>
@@ -740,7 +769,7 @@ const Registration: React.FC = () => {
               <div>
                 <label className="block text-gray-700 mb-2">
                   <Phone className="w-4 h-4 inline mr-2" />
-                  Telefone *
+                  WhatsApp*
                 </label>
                 <input
                   type="tel"
@@ -753,7 +782,10 @@ const Registration: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">CPF *</label>
+                <label className="block text-gray-700 mb-2">
+                  <CreditCard className="w-4 h-4 inline mr-2" />
+                  CPF *
+                </label>
                 <input
                   type="text"
                   name="cpf"
@@ -764,112 +796,95 @@ const Registration: React.FC = () => {
                 />
               </div>
 
-              {/* Seção de Endereço */}
-              <div className="border-t border-[#E8DCC4] pt-6 mt-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-[#B8860B]" />
-                  Endereço
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-gray-700 mb-2">CEP</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        name="cep"
-                        value={formData.cep || ''}
-                        onChange={handleCepChange}
-                        className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
-                        placeholder="00000-000"
-                        maxLength={9}
-                      />
-                      {loadingCep && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#D4AF37]"></div>
-                        </div>
-                      )}
+              {/* Perguntas Dinâmicas */}
+              {(loadingQuestions || questions.length > 0) && (
+                <div className="mt-8 pt-6 border-t border-[#E8DCC4]">
+                  <h3 className="text-xl text-gray-800 mb-4">Perguntas Adicionais</h3>
+                  {loadingQuestions ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-8 h-8 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-gray-600 text-sm">Carregando perguntas...</p>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Digite o CEP para preencher automaticamente</p>
-                  </div>
-                </div>
+                  ) : (
+                    <div className="space-y-4">
+                    {questions.map((question) => (
+                      <div key={question.id} className="space-y-2">
+                        <label className="block text-gray-700 mb-2">
+                          {question.question_text}
+                          {question.is_required && <span className="text-red-500 ml-1">*</span>}
+                        </label>
+                        
+                        {question.question_type === 'text' && (
+                          <input
+                            type="text"
+                            value={questionAnswers[question.id] as string || ''}
+                            onChange={(e) => {
+                              setQuestionAnswers({
+                                ...questionAnswers,
+                                [question.id]: e.target.value
+                              });
+                            }}
+                            className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
+                            placeholder="Digite sua resposta..."
+                          />
+                        )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-gray-700 mb-2">Rua/Logradouro</label>
-                    <input
-                      type="text"
-                      name="street"
-                      value={formData.street || ''}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
-                      placeholder="Nome da rua"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2">Número</label>
-                    <input
-                      type="text"
-                      name="number"
-                      value={formData.number || ''}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
-                      placeholder="123"
-                    />
-                  </div>
-                </div>
+                        {question.question_type === 'single_choice' && (
+                          <div className="space-y-2">
+                            {question.options.map((option, index) => (
+                              <label key={index} className="flex items-center gap-3 p-3 border border-[#E8DCC4] rounded-lg hover:bg-[#F5F5DC]/30 cursor-pointer min-w-0">
+                                <input
+                                  type="radio"
+                                  name={`question-${question.id}`}
+                                  value={option}
+                                  checked={questionAnswers[question.id] === option}
+                                  onChange={(e) => {
+                                    setQuestionAnswers({
+                                      ...questionAnswers,
+                                      [question.id]: e.target.value
+                                    });
+                                  }}
+                                  className="w-4 h-4 text-[#D4AF37] border-[#E8DCC4] focus:ring-[#D4AF37] flex-shrink-0"
+                                />
+                                <span className="text-gray-700 break-words min-w-0 flex-1">{option}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-gray-700 mb-2">Complemento</label>
-                    <input
-                      type="text"
-                      name="complement"
-                      value={formData.complement || ''}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
-                      placeholder="Apto, bloco, etc. (opcional)"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2">Bairro</label>
-                    <input
-                      type="text"
-                      name="neighborhood"
-                      value={formData.neighborhood || ''}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
-                      placeholder="Nome do bairro"
-                    />
-                  </div>
+                        {question.question_type === 'multiple_choice' && (
+                          <div className="space-y-2">
+                            {question.options.map((option, index) => (
+                              <label key={index} className="flex items-center gap-3 p-3 border border-[#E8DCC4] rounded-lg hover:bg-[#F5F5DC]/30 cursor-pointer min-w-0">
+                                <input
+                                  type="checkbox"
+                                  value={option}
+                                  checked={(questionAnswers[question.id] as string[] || []).includes(option)}
+                                  onChange={(e) => {
+                                    const currentAnswers = (questionAnswers[question.id] as string[] || []);
+                                    const newAnswers = e.target.checked
+                                      ? [...currentAnswers, option]
+                                      : currentAnswers.filter(a => a !== option);
+                                    setQuestionAnswers({
+                                      ...questionAnswers,
+                                      [question.id]: newAnswers
+                                    });
+                                  }}
+                                  className="w-4 h-4 text-[#D4AF37] border-[#E8DCC4] rounded focus:ring-[#D4AF37] flex-shrink-0"
+                                />
+                                <span className="text-gray-700 break-words min-w-0 flex-1">{option}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    </div>
+                  )}
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-gray-700 mb-2">Cidade</label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={formData.city || ''}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
-                      placeholder="Nome da cidade"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2">Estado (UF)</label>
-                    <input
-                      type="text"
-                      name="state"
-                      value={formData.state || ''}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg border border-[#E8DCC4] focus:outline-none focus:border-[#D4AF37] bg-white/50"
-                      placeholder="SP"
-                      maxLength={2}
-                    />
-                  </div>
-                </div>
-              </div>
+              )}
 
               <button
                 onClick={handleNextStep}
@@ -910,7 +925,9 @@ const Registration: React.FC = () => {
                     ? 'border-[#D4AF37] bg-[#F5F5DC]'
                     : 'border-[#E8DCC4] hover:border-[#D4AF37]'
                     }`}
-                  onClick={() => setPaymentMethod('pix')}
+                  onClick={() => {
+                    setPaymentMethod('pix');
+                  }}
                 >
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
@@ -933,7 +950,9 @@ const Registration: React.FC = () => {
                     ? 'border-[#D4AF37] bg-[#F5F5DC]'
                     : 'border-[#E8DCC4] hover:border-[#D4AF37]'
                     }`}
-                  onClick={() => setPaymentMethod('credit_card')}
+                  onClick={() => {
+                    setPaymentMethod('credit_card');
+                  }}
                 >
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
@@ -986,17 +1005,6 @@ const Registration: React.FC = () => {
                 onPaymentConfirmed={handlePixPaymentConfirmed}
                 isTestMode={false} // Desabilitar modo teste para permitir polling automático
                 registrationId={registrationId || undefined}
-                paymentId={paymentId || undefined}
-                checkPaymentStatus={async (id: string) => {
-                  // Verificar status do pagamento no Mercado Pago
-                  try {
-                    const status = await api.getPaymentStatus(id);
-                    return status;
-                  } catch (error) {
-                    console.error('Erro ao verificar status:', error);
-                    return null;
-                  }
-                }}
                 checkRegistrationStatus={async (id: string) => {
                   // Verificar status da inscrição no banco de dados (atualizado pelo webhook)
                   try {
@@ -1011,23 +1019,67 @@ const Registration: React.FC = () => {
 
               <div className="flex flex-col-reverse md:flex-row gap-4">
                 <button
-                  onClick={() => setShowPixPayment(false)}
+                  onClick={() => {
+                    setShowPixPayment(false);
+                    setShowWhatsAppContact(false); // Resetar estado ao voltar
+                  }}
                   className="flex-1 border border-[#E8DCC4] text-gray-700 py-3 rounded-full hover:bg-white/50 transition-all"
                 >
                   Voltar
                 </button>
                 <button
                   onClick={handlePixPaymentConfirmed}
-                  className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white py-3 rounded-full hover:shadow-lg transition-all"
+                  disabled={loading}
+                  className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white py-3 rounded-full hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <CheckCircle className="w-5 h-5" />
-                  <span>Já Paguei</span>
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12H4z"></path>
+                      </svg>
+                      <span>Verificando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5" />
+                      <span>Já Paguei</span>
+                    </>
+                  )}
                 </button>
               </div>
 
               <p className="text-sm text-gray-500 text-center">
                 Clique em "Já Paguei" após realizar o pagamento
               </p>
+
+              {/* Mensagem de contato via WhatsApp quando não conseguir confirmar */}
+              {showWhatsAppContact && (settings?.contact_phones?.find(cp => cp.use_for_pix_support)?.phone || settings?.contact_phones?.[0]?.phone || settings?.church_contact_phone) && (
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 md:p-6 mt-4">
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <MessageCircle className="w-5 h-5 md:w-6 md:h-6 text-blue-600 flex-shrink-0 mt-1" />
+                    <div className="flex-1">
+                      <h4 className="text-base md:text-lg font-semibold text-blue-900 mb-2">
+                        Pagamento via WhatsApp com Comprovante
+                      </h4>
+                      <p className="text-sm md:text-base text-blue-800 mb-3 md:mb-4">
+                        Se você já realizou o pagamento PIX mas o sistema não confirmou automaticamente, 
+                        envie o comprovante pelo WhatsApp para confirmação manual do pagamento.
+                      </p>
+                      <button
+                        onClick={openWhatsApp}
+                        className="w-full md:w-auto flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-full transition-all shadow-md"
+                      >
+                        <MessageCircle className="w-4 h-4 md:w-5 md:h-5" />
+                        <span>WhatsApp</span>
+                      </button>
+                      <p className="text-blue-600 text-xs md:text-sm mt-2 md:mt-3">
+                        📱 WhatsApp: {settings?.contact_phones?.find(cp => cp.use_for_pix_support)?.phone || settings?.contact_phones?.[0]?.phone || settings?.church_contact_phone}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1105,7 +1157,7 @@ const Registration: React.FC = () => {
                           <p className="font-medium text-sm break-all">{formData.email}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Telefone:</p>
+                          <p className="text-sm text-gray-500">WhatsApp:</p>
                           <p className="font-medium text-sm">{formData.phone}</p>
                         </div>
                       </div>
@@ -1113,18 +1165,20 @@ const Registration: React.FC = () => {
 
                     {/* Coluna 2: QR Code */}
                     <div className="flex flex-col items-center justify-center order-1 md:order-2">
-                      <div className="w-40 h-40 bg-white rounded flex items-center justify-center border-2 border-[#E8DCC4] p-2 mb-1">
+                      <div className="w-32 h-32 md:w-40 md:h-40 bg-white rounded flex items-center justify-center border-2 border-[#E8DCC4] p-2 mb-1 aspect-square">
                         {registrationId ? (
-                          <QRCodeSVG
-                            value={registrationId}
-                            size={150}
-                            level="H"
-                            includeMargin={false}
-                            fgColor="#B8860B"
-                            bgColor="#FFFFFF"
-                          />
+                          <div className="w-full h-full flex items-center justify-center">
+                            <QRCodeSVG
+                              value={registrationId}
+                              size={120}
+                              level="H"
+                              includeMargin={false}
+                              fgColor="#B8860B"
+                              bgColor="#FFFFFF"
+                            />
+                          </div>
                         ) : (
-                          <QrCode className="w-16 h-16 text-[#B8860B]" />
+                          <QrCode className="w-12 h-12 md:w-16 md:h-16 text-[#B8860B]" />
                         )}
                       </div>
                       <p className="text-sm text-gray-500 text-center leading-tight">

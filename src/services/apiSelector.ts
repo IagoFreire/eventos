@@ -17,9 +17,12 @@ export const api = isOfflineMode() ? {
   updateEvent: mockApi.updateEvent,
   getEventSettings: mockApi.getEventSettings,
   updateEventSettings: mockApi.updateEventSettings,
+  getEventDates: mockApi.getEventDates || (async () => []),
+  updateEventDates: mockApi.updateEventDates || (async () => []),
   createRegistration: mockApi.createRegistration,
   getRegistrations: mockApi.getRegistrations,
   getRegistrationById: mockApi.getRegistrationById,
+  checkPaymentStatus: mockApi.getRegistrationById, // Usar mesma função do mock
   getRegistrationsByCpf: mockApi.getRegistrationsByCpf || (async () => []),
   getPendingRegistrationByEmail: mockApi.getPendingRegistrationByEmail || (async () => null),
   updateRegistration: mockApi.updateRegistration,
@@ -31,6 +34,12 @@ export const api = isOfflineMode() ? {
   getInstallments: mockApi.getInstallments,
   login: mockApi.login,
   verifyToken: mockApi.verifyToken,
+  getRegistrationQuestions: realApi.getRegistrationQuestions,
+  getRegistrationQuestion: realApi.getRegistrationQuestion,
+  createRegistrationQuestion: realApi.createRegistrationQuestion,
+  updateRegistrationQuestion: realApi.updateRegistrationQuestion,
+  deleteRegistrationQuestion: realApi.deleteRegistrationQuestion,
+  reorderRegistrationQuestions: realApi.reorderRegistrationQuestions,
 } : {
   // Real API
   getEvent: realApi.getEvent,
@@ -39,9 +48,12 @@ export const api = isOfflineMode() ? {
   updateEvent: realApi.updateEvent,
   getEventSettings: realApi.getEventSettings,
   updateEventSettings: realApi.updateEventSettings,
+  getEventDates: realApi.getEventDates,
+  updateEventDates: realApi.updateEventDates,
   createRegistration: realApi.createRegistration,
   getRegistrations: realApi.getRegistrations,
   getRegistrationById: realApi.getRegistrationById,
+  checkPaymentStatus: realApi.checkPaymentStatus,
   getRegistrationsByCpf: realApi.getRegistrationsByCpf,
   getPendingRegistrationByEmail: realApi.getPendingRegistrationByEmail,
   updateRegistration: realApi.updateRegistration,
@@ -53,6 +65,12 @@ export const api = isOfflineMode() ? {
   getInstallments: realApi.getInstallments,
   login: realApi.login,
   verifyToken: realApi.verifyToken,
+  getRegistrationQuestions: realApi.getRegistrationQuestions,
+  getRegistrationQuestion: realApi.getRegistrationQuestion,
+  createRegistrationQuestion: realApi.createRegistrationQuestion,
+  updateRegistrationQuestion: realApi.updateRegistrationQuestion,
+  deleteRegistrationQuestion: realApi.deleteRegistrationQuestion,
+  reorderRegistrationQuestions: realApi.reorderRegistrationQuestions,
 };
 
 // Log do modo atual

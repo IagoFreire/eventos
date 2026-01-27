@@ -12,9 +12,7 @@
     "seed": "tsx database/seed.ts",
     "db:setup": "npm run migrate && npm run seed",
     "db:reset": "echo 'CUIDADO: Isso vai apagar todos os dados!' && npm run migrate && npm run seed",
-    "create-admin": "tsx scripts/create-admin.ts",
-    "test-login": "tsx scripts/test-login.ts",
-    "test-hash": "tsx scripts/test-hash.ts"
+    "create-admin": "tsx scripts/create-admin.ts"
   },
   "keywords": ["eventos", "api", "backend"],
   "author": "",

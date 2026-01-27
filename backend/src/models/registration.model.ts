@@ -82,10 +82,10 @@ export class RegistrationModel {
   // Criar nova inscrição
   static async create(registration: Omit<Registration, 'id' | 'created_at' | 'updated_at' | 'checked_in' | 'payment_status'>): Promise<Registration> {
     const result = await pool.query(
-      `INSERT INTO registrations (event_id, name, email, phone, cpf, address, payment_status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+      `INSERT INTO registrations (event_id, name, email, phone, cpf, payment_status)
+       VALUES ($1, $2, $3, $4, $5, 'pending')
        RETURNING *`,
-      [registration.event_id, registration.name, registration.email, registration.phone, registration.cpf, registration.address]
+      [registration.event_id, registration.name, registration.email, registration.phone, registration.cpf]
     );
     const converted = convertToBrazilTimezone(result.rows);
     return converted[0];
@@ -98,7 +98,9 @@ export class RegistrationModel {
     let paramCount = 1;
 
     Object.entries(registration).forEach(([key, value]) => {
-      if (value !== undefined && key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
+      // Permitir null para payment_method, mas não undefined
+      const isAllowedNull = key === 'payment_method' && value === null;
+      if ((value !== undefined || isAllowedNull) && key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
         fields.push(`${key} = $${paramCount}`);
         values.push(value);
         paramCount++;
@@ -108,11 +110,9 @@ export class RegistrationModel {
     if (fields.length === 0) return null;
 
     values.push(id);
-    const result = await pool.query(
-      `UPDATE registrations SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
-      values
-    );
+    const query = `UPDATE registrations SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${paramCount} RETURNING *`;
 
+    const result = await pool.query(query, values);
     const converted = convertToBrazilTimezone(result.rows);
     return converted[0] || null;
   }
@@ -127,17 +127,53 @@ export class RegistrationModel {
   ): Promise<Registration | null> {
     const paymentDate = paymentStatus === 'approved' ? new Date() : null;
     
-    const result = await pool.query(
-      `UPDATE registrations 
-       SET payment_status = $1, 
-           payment_id = $2, 
-           payment_method = $3,
-           payment_amount = $4,
-           payment_date = $5
-       WHERE id = $6 
-       RETURNING *`,
-      [paymentStatus, paymentId, paymentMethod, paymentAmount, paymentDate, id]
-    );
+    // Buscar registro atual para preservar valores existentes se não forem fornecidos
+    const current = await this.findById(id);
+    
+    // Usar valores fornecidos ou manter os existentes
+    // Se paymentMethod for fornecido (mesmo que null), usar; senão, manter o existente
+    const finalPaymentMethod = paymentMethod !== undefined ? paymentMethod : (current?.payment_method || null);
+    const finalPaymentAmount = paymentAmount !== undefined ? paymentAmount : (current?.payment_amount || null);
+    const finalPaymentId = paymentId !== undefined ? paymentId : (current?.payment_id || null);
+    
+    // Construir query dinamicamente para atualizar apenas campos fornecidos
+    const updates: string[] = ['payment_status = $1'];
+    const values: any[] = [paymentStatus];
+    let paramCount = 2;
+    
+    // Atualizar payment_id apenas se fornecido
+    if (paymentId !== undefined) {
+      updates.push(`payment_id = $${paramCount}`);
+      values.push(finalPaymentId);
+      paramCount++;
+    }
+    
+    // Atualizar payment_method apenas se fornecido
+    if (paymentMethod !== undefined) {
+      updates.push(`payment_method = $${paramCount}`);
+      values.push(finalPaymentMethod);
+      paramCount++;
+    }
+    
+    // Atualizar payment_amount apenas se fornecido
+    if (paymentAmount !== undefined) {
+      updates.push(`payment_amount = $${paramCount}`);
+      values.push(finalPaymentAmount);
+      paramCount++;
+    }
+    
+    // Sempre atualizar payment_date e updated_at
+    updates.push(`payment_date = $${paramCount}`);
+    values.push(paymentDate);
+    paramCount++;
+    
+    updates.push(`updated_at = NOW()`);
+    
+    values.push(id);
+    
+    const query = `UPDATE registrations SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`;
+    
+    const result = await pool.query(query, values);
     const converted = convertToBrazilTimezone(result.rows);
     return converted[0] || null;
   }

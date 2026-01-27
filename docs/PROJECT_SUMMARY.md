@@ -21,24 +21,24 @@
 - ✅ **EventContext** - Gerenciamento de eventos
 - ✅ **RegistrationContext** - Gerenciamento de inscrições
 
-#### Serviços (2)
+#### Serviços (3)
 - ✅ **api.ts** - Cliente HTTP com Axios
-- ✅ **supabase.ts** - Cliente Supabase
+- ✅ **apiSelector.ts** - Seletor de API (real/mock)
+- ✅ **mercadopago-config.ts** - Configuração Mercado Pago
 
-### 🗄️ Banco de Dados (SQL Scripts)
+### 🗄️ Banco de Dados
 
-- ✅ **schema.sql** - Criação de tabelas
-- ✅ **seed.sql** - Dados de exemplo
-- ✅ **policies.sql** - Segurança RLS
+- ✅ **Migrações versionadas** - Sistema de migrações em `backend/database/migrations/`
+- ✅ **Seeds** - Dados iniciais em `backend/database/seeds/`
 
-### 📚 Documentação (6 arquivos)
+### 📚 Documentação
 
 - ✅ **README.md** - Documentação principal
-- ✅ **SETUP.md** - Guia de configuração
-- ✅ **QUICKSTART.md** - Início rápido
-- ✅ **ARCHITECTURE.md** - Arquitetura técnica
-- ✅ **MERCADOPAGO_INTEGRATION.md** - Integração de pagamentos
-- ✅ **PROJECT_SUMMARY.md** - Este arquivo
+- ✅ **docs/CONFIGURACAO_PRODUCAO.md** - Guia de configuração
+- ✅ **docs/COMANDOS.md** - Referência de comandos
+- ✅ **docs/ARCHITECTURE.md** - Arquitetura técnica
+- ✅ **docs/MERCADOPAGO_INTEGRATION.md** - Integração de pagamentos
+- ✅ **docs/PROJECT_SUMMARY.md** - Este arquivo
 
 ## 🎨 Design System
 
@@ -64,9 +64,9 @@
 {
   "react": "^19.2.0",
   "react-dom": "^19.2.0",
-  "react-router-dom": "^6.x",
-  "axios": "^1.x",
-  "@supabase/supabase-js": "^2.x"
+  "react-router-dom": "^7.12.0",
+  "axios": "^1.13.2",
+  "tailwindcss": "^3.4.1"
 }
 ```
 
@@ -83,13 +83,11 @@ eventos/
 │   ├── 📄 App.tsx
 │   ├── 📄 main.tsx
 │   └── 📄 index.css
-├── 📁 database/           (3 arquivos .sql)
+├── 📁 backend/
+│   └── 📁 database/       (migrações e seeds)
 ├── 📁 public/
 ├── 📄 README.md
-├── 📄 SETUP.md
-├── 📄 QUICKSTART.md
-├── 📄 ARCHITECTURE.md
-├── 📄 MERCADOPAGO_INTEGRATION.md
+├── 📁 docs/              (documentação completa)
 ├── 📄 package.json
 ├── 📄 vite.config.ts
 └── 📄 tsconfig.json
@@ -132,11 +130,6 @@ eventos/
 
 ## 🔌 Integrações Preparadas
 
-### ✅ Supabase (Postgres)
-- Cliente configurado
-- Tipos definidos
-- Queries preparadas
-
 ### ✅ API Backend Node.js
 - Endpoints documentados
 - Cliente HTTP configurado
@@ -174,9 +167,9 @@ eventos/
 - ✅ Validação de dados
 
 ### Database
-- ✅ Row Level Security (RLS)
-- ✅ Políticas de acesso
+- ✅ Migrações versionadas
 - ✅ Índices otimizados
+- ✅ Constraints de integridade
 
 ## 📊 Estatísticas do Código
 
@@ -255,7 +248,7 @@ eventos/
 
 ### Imediato
 1. ⬜ Criar arquivo .env com suas credenciais
-2. ⬜ Configurar banco de dados no Supabase
+2. ⬜ Configurar banco de dados PostgreSQL (local ou Supabase)
 3. ⬜ Testar o sistema localmente
 
 ### Curto Prazo
@@ -293,9 +286,9 @@ eventos/
 
 ### 🎯 Totalmente Alinhado aos Requisitos
 
-✅ Backend em Node.js (preparado)  
-✅ Integração Supabase (configurada)  
-✅ API Mercado Pago (documentada)  
+✅ Backend em Node.js (implementado)  
+✅ Banco de dados PostgreSQL (local ou via Supabase)  
+✅ API Mercado Pago (integrada)  
 ✅ Paleta branco/bege/dourado  
 ✅ Páginas em src/pages  
 ✅ Context API  
@@ -308,11 +301,11 @@ eventos/
 
 ### Documentação
 - ../README.md - Visão geral
-- SETUP.md - Configuração
-- QUICKSTART.md - Início rápido
-- ARCHITECTURE.md - Arquitetura
-- OFFLINE_MODE.md - Modo offline
-- MERCADOPAGO_INTEGRATION.md - Pagamentos
+- docs/CONFIGURACAO_PRODUCAO.md - Configuração
+- docs/COMANDOS.md - Comandos rápidos
+- docs/ARCHITECTURE.md - Arquitetura
+- docs/OFFLINE_MODE.md - Modo offline
+- docs/MERCADOPAGO_INTEGRATION.md - Pagamentos
 
 ### Comandos Rápidos
 ```bash

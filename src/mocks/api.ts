@@ -1,4 +1,4 @@
-import type { Event, Registration, EventSettings } from '../types';
+import type { Event, Registration, EventSettings, EventDate } from '../types';
 import { 
   mockEvents, 
   mockRegistrations, 
@@ -105,6 +105,41 @@ export const mockApi = {
     saveToStorage(STORAGE_KEYS.EVENT_SETTINGS, eventSettings);
     console.log('✅ [MOCK] Configurações atualizadas:', eventSettings);
     return eventSettings;
+  },
+
+  // Datas do Evento
+  getEventDates: async (eventId: string): Promise<EventDate[]> => {
+    await mockDelay();
+    const event = events.find(e => e.id === eventId);
+    if (!event) {
+      throw new Error('Evento não encontrado');
+    }
+    // Retornar datas do evento se existirem, senão retornar array vazio
+    return event.dates || [];
+  },
+
+  updateEventDates: async (eventId: string, dates: (string | Date)[]): Promise<EventDate[]> => {
+    await mockDelay();
+    const index = events.findIndex(e => e.id === eventId);
+    if (index === -1) {
+      throw new Error('Evento não encontrado');
+    }
+    
+    // Converter para EventDate[]
+    const eventDates: EventDate[] = dates.map((date, idx) => ({
+      id: `date-${eventId}-${idx}`,
+      event_id: eventId,
+      date: typeof date === 'string' ? date : date.toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
+    
+    // Atualizar evento com as datas
+    events[index] = { ...events[index], dates: eventDates };
+    saveToStorage(STORAGE_KEYS.EVENTS, events);
+    console.log('✅ [MOCK] Datas do evento atualizadas:', eventDates);
+    
+    return eventDates;
   },
 
   // Inscrições

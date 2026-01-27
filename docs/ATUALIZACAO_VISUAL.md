@@ -180,7 +180,7 @@ Todas as páginas foram desenvolvidas com design responsivo:
 - ✅ Mantém compatibilidade com serviços de API
 - ✅ Mantém compatibilidade com tipos TypeScript
 - ✅ Mantém modo offline funcional
-- ✅ Mantém integração com Supabase
+- ✅ Mantém integração com backend
 
 ## 📝 Notas Importantes
 

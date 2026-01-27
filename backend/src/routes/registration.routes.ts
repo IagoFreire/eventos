@@ -13,13 +13,14 @@ const registrationValidation = [
   body('email').isEmail().withMessage('Email inválido'),
   body('phone').notEmpty().withMessage('Telefone é obrigatório'),
   body('cpf').notEmpty().withMessage('CPF é obrigatório'),
-  body('address').notEmpty().withMessage('Endereço é obrigatório'),
 ];
 
 // Rotas públicas
 router.post('/', registrationValidation, validate, RegistrationController.create);
 router.get('/by-cpf', RegistrationController.getByCpf);
 router.get('/pending-by-email', RegistrationController.getPendingByEmail);
+router.patch('/:id/payment-method', RegistrationController.updatePaymentMethod); // Rota pública para atualizar método de pagamento (deve vir antes de /:id)
+router.get('/:id/check-payment', RegistrationController.checkPaymentStatus); // Rota pública para verificar pagamento
 
 // Rotas protegidas (admin apenas)
 router.get('/', authenticateToken, requireAdmin, RegistrationController.getAll);

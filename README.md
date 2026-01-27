@@ -1,10 +1,10 @@
 # Sistema de Inscrição para Eventos - Igreja
 
-Sistema completo de gerenciamento de inscrições para eventos da igreja, com integração de pagamentos via Mercado Pago e banco de dados Postgres no Supabase.
+Sistema completo de gerenciamento de inscrições para eventos da igreja, com integração de pagamentos via Mercado Pago e banco de dados PostgreSQL (pode ser local ou via Supabase).
 
 ## 🎨 Design
 
-✨ **NOVO!** Sistema atualizado com visual moderno baseado no modelo Figma!
+✨ **Sistema atualizado com visual moderno baseado no modelo Figma!**
 
 O sistema utiliza uma paleta de cores elegante e moderna:
 - **Dourado Principal** (#D4AF37)
@@ -22,63 +22,105 @@ O sistema utiliza uma paleta de cores elegante e moderna:
 
 ## 📋 Funcionalidades
 
-### Página Inicial
+### Página Inicial (`/`)
 - Apresentação do evento com imagem destacada
 - Informações sobre data, local e valor
 - Lista de itens incluídos no evento
 - Call-to-action para inscrição
+- Visualização de datas do evento
+- Informações de contato e redes sociais
 
-### Sistema de Inscrição (2 Etapas)
+### Sistema de Inscrição (`/inscricao`)
 **Etapa 1 - Dados Pessoais:**
 - Nome completo
 - Email
-- Telefone
+- Telefone (WhatsApp)
 - CPF
-- Endereço completo
+- Respostas a perguntas personalizadas do evento
 
 **Etapa 2 - Pagamento:**
 - Resumo da inscrição
 - Seleção de método de pagamento (PIX, Cartão de Crédito)
-- Integração com Mercado Pago
+- Integração completa com Mercado Pago
 - Confirmação do pagamento
+- Geração de QR Code para PIX
+- Processamento de cartão de crédito
 
-### Painel Administrativo
+### Página de Confirmação (`/confirmacao`)
+- Exibição do ingresso com QR Code
+- Informações do participante
+- Detalhes do evento
+- Opção de impressão e download em PDF
+- Link para consultar ingresso posteriormente
+
+### Consulta de Ingresso (`/meu-ingresso`)
+- Busca de ingressos por CPF
+- Visualização de todos os ingressos do participante
+- Reimpressão de ingressos
+- Download em PDF
+
+### Painel Administrativo (`/admin`)
 - Dashboard com estatísticas de inscrições
 - Visualização de todas as inscrições
 - Filtros por status de pagamento e check-in
 - Busca por nome, email ou CPF
 - Edição de inscrições
-- Sistema de check-in para o evento
 - Atualização de status de pagamento
+- Exportação de dados
 
-### Autenticação
+### Configurações do Evento (`/admin/configuracoes`)
+- Configuração de informações do evento
+- Dados da igreja (nome, contato, redes sociais)
+- Gerenciamento de itens incluídos
+- Configuração de datas do evento
+- Gerenciamento de participantes confirmados
+- Perguntas personalizadas de inscrição
+- Personalização visual (título, imagem, fontes)
+
+### Sistema de Check-in (`/admin/checkin`)
+- Scanner de QR Code para check-in rápido
+- Busca manual por CPF ou nome
+- Visualização de informações do participante
+- Confirmação de presença
+- Histórico de check-ins
+
+### Autenticação (`/login`)
 - Sistema de login para administradores
 - Proteção de rotas administrativas
-- Gerenciamento de sessão com tokens
+- Gerenciamento de sessão com tokens JWT
+- Verificação de permissões
 
 ## 🚀 Tecnologias Utilizadas
 
 ### Frontend
 - **React** 19.2.0 com TypeScript
-- **Vite** - Build tool
-- **React Router DOM** - Gerenciamento de rotas
-- **Context API** - Gerenciamento de estado
-- **Axios** - Requisições HTTP
-- **Tailwind CSS** - Framework CSS moderno e responsivo
-- **Lucide React** - Biblioteca de ícones moderna
-- **Class Variance Authority** - Gerenciamento de variantes de componentes
+- **Vite** 7.2.4 - Build tool moderna e rápida
+- **React Router DOM** 7.12.0 - Gerenciamento de rotas
+- **Context API** - Gerenciamento de estado global
+- **Axios** 1.13.2 - Requisições HTTP
+- **Tailwind CSS** 3.4.1 - Framework CSS moderno e responsivo
+- **Lucide React** 0.562.0 - Biblioteca de ícones moderna
+- **React Toastify** 11.0.5 - Notificações elegantes
+- **Mercado Pago SDK React** 1.0.7 - Integração de pagamentos
+- **QRCode React** 4.2.0 - Geração de QR Codes
+- **html5-qrcode** 2.3.8 - Scanner de QR Codes
+- **jsPDF** 4.0.0 - Geração de PDFs
+- **html2canvas** 1.4.1 - Captura de tela para PDF
 
 ### Backend
 - **Node.js** 18+ com TypeScript
-- **Express** - Framework web
+- **Express** 4.18.2 - Framework web
 - **PostgreSQL** - Banco de dados relacional
-- **JWT** - Autenticação e autorização
-- **Bcrypt** - Hash de senhas
-- **Mercado Pago SDK** - Processamento de pagamentos
+- **JWT** (jsonwebtoken) 9.0.2 - Autenticação e autorização
+- **Bcrypt** (bcryptjs) 2.4.3 - Hash de senhas
+- **Mercado Pago SDK** 2.0.15 - Processamento de pagamentos
+- **Express Validator** 7.0.1 - Validação de dados
+- **pg** 8.11.3 - Cliente PostgreSQL
 
 ### Integrações
-- **PostgreSQL** - Banco de dados relacional
-- **Mercado Pago** - Processamento de pagamentos
+- **PostgreSQL** - Banco de dados relacional (pode ser local ou via Supabase)
+- **Supabase** - Opcional: pode ser usado como host do PostgreSQL pelo backend
+- **Mercado Pago** - Processamento de pagamentos (PIX e Cartão)
 - **JWT** - Sistema de autenticação seguro
 
 ## ✨ Atualização Visual (Janeiro 2026)
@@ -91,7 +133,7 @@ O sistema foi completamente redesenhado com base no modelo Figma, trazendo:
 - 🎯 **UX Aprimorada**: Animações suaves e feedback visual claro
 - 🔄 **100% Compatível**: Todas as funcionalidades foram preservadas
 
-Para mais detalhes sobre a atualização, consulte [ATUALIZACAO_VISUAL.md](./ATUALIZACAO_VISUAL.md)
+Para mais detalhes sobre a atualização, consulte [docs/ATUALIZACAO_VISUAL.md](./docs/ATUALIZACAO_VISUAL.md)
 
 ## 📦 Instalação
 
@@ -116,25 +158,70 @@ cp env.example .env
 ```
 
 Edite `backend/.env` com suas credenciais:
+
+**Opção 1: PostgreSQL Local**
 ```env
 PORT=3000
+NODE_ENV=development
+
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=eventos
 DB_USER=postgres
 DB_PASSWORD=sua_senha
+
 JWT_SECRET=sua_chave_secreta_super_segura
+JWT_EXPIRES_IN=7d
+
 MERCADOPAGO_ACCESS_TOKEN=seu_token_mercado_pago
+
+FRONTEND_URL=http://localhost:5173
 ```
 
-**4. Configure o banco de dados**
+**Opção 2: Supabase (PostgreSQL gerenciado)**
+```env
+PORT=3000
+NODE_ENV=development
+
+# Banco de Dados Supabase (Connection Pooler)
+DB_HOST=aws-0-us-west-2.pooler.supabase.com
+DB_PORT=5432
+DB_NAME=postgres
+DB_USER=postgres.seu_projeto_id
+DB_PASSWORD=sua_senha_do_supabase
+
+JWT_SECRET=sua_chave_secreta_super_segura
+JWT_EXPIRES_IN=7d
+
+MERCADOPAGO_ACCESS_TOKEN=seu_token_mercado_pago
+
+FRONTEND_URL=http://localhost:5173
+```
+
+> 💡 **Dica:** O backend suporta tanto PostgreSQL local quanto Supabase. Use o que preferir!
+
+**4. Configure o frontend**
+
+Crie um arquivo `.env` na raiz do projeto:
+```env
+VITE_API_URL=http://localhost:3000/api
+VITE_MERCADO_PAGO_PUBLIC_KEY=sua_chave_publica_mercado_pago
+```
+
+> **Nota:** O frontend não precisa de variáveis do Supabase, pois usa apenas a API do backend. O backend pode usar Supabase como host do PostgreSQL, mas isso é configurado apenas no `backend/.env`.
+
+**5. Configure o banco de dados**
 
 ```bash
 cd backend
 npm run migrate
 ```
 
-**5. Inicie o sistema**
+Isso criará todas as tabelas e inserirá um usuário admin padrão:
+- **Email**: admin@eventos.com
+- **Senha**: admin123
+
+**6. Inicie o sistema**
 
 Terminal 1 - Backend:
 ```bash
@@ -153,7 +240,7 @@ npm run dev
 - Email: `admin@eventos.com`
 - Senha: `admin123`
 
-> 📚 Para guia detalhado, veja: [`INSTALACAO_BACKEND.md`](INSTALACAO_BACKEND.md)
+> 📚 Para guia detalhado, veja: [`docs/CONFIGURACAO_PRODUCAO.md`](./docs/CONFIGURACAO_PRODUCAO.md)
 
 ### 🔌 Modo Offline (Opcional - Sem Backend)
 
@@ -163,27 +250,27 @@ Se preferir testar sem configurar o backend:
 npm run dev-offline
 ```
 
-Credenciais: `admin@igreja.com` / `admin123`
+**Credenciais do modo offline:**
+- Email: `admin@igreja.com`
+- Senha: `admin123`
+
+Veja a documentação completa em [`docs/OFFLINE_MODE.md`](./docs/OFFLINE_MODE.md)
 
 ## 🏗️ Build e Deploy
 
 O sistema oferece duas opções de build:
 
-### 🌐 Build ONLINE (Produção com Supabase)
+### 🌐 Build ONLINE (Produção com Backend)
 ```bash
 # Usando npm
-npm run build:online
+npm run build
 
-# Ou usando o script interativo (Windows)
-.\build.bat
-# Escolha opção 1
-
-# PowerShell
-.\build.ps1
-# Escolha opção 1
+# Preview da build
+npm run preview
 ```
+
 Esta versão usa:
-- ✅ Banco de dados Supabase (real)
+- ✅ Banco de dados PostgreSQL (real)
 - ✅ Autenticação real
 - ✅ Integração com Mercado Pago
 - ✅ Dados persistentes
@@ -193,19 +280,15 @@ Esta versão usa:
 # Usando npm
 npm run build:offline
 
-# Ou usando o script interativo (Windows)
-.\build.bat
-# Escolha opção 2
-
-# PowerShell
-.\build.ps1
-# Escolha opção 2
+# Preview da build offline
+npm run preview:offline
 ```
+
 Esta versão usa:
 - ✅ Dados mockados (simulados)
 - ✅ Funciona sem internet
 - ✅ Perfeito para demonstrações
-- ✅ Não precisa configurar Supabase
+- ✅ Não precisa configurar backend
 
 **Credenciais do modo offline:**
 - Email: `admin@igreja.com`
@@ -215,7 +298,7 @@ Esta versão usa:
 
 Após o build, os arquivos estarão na pasta `dist/`. Você pode:
 
-1. **Nginx** (como configurado):
+1. **Nginx**:
    ```bash
    # Copie os arquivos para a pasta do nginx
    # Configure o nginx.conf apontando para dist/
@@ -231,28 +314,59 @@ Após o build, os arquivos estarão na pasta `dist/`. Você pode:
 ## 🗂️ Estrutura do Projeto
 
 ```
-src/
-├── assets/          # Imagens e recursos estáticos
-├── components/      # Componentes reutilizáveis
-│   ├── Header.tsx
-│   ├── Footer.tsx
-│   └── Loading.tsx
-├── contexts/        # Context API para gerenciamento de estado
-│   ├── AuthContext.tsx
-│   ├── EventContext.tsx
-│   └── RegistrationContext.tsx
-├── pages/          # Páginas da aplicação
-│   ├── Home.tsx
-│   ├── Registration.tsx
-│   ├── Login.tsx
-│   └── Admin.tsx
-├── services/       # Serviços de integração
-│   ├── api.ts
-│   └── supabase.ts
-├── types/          # Definições TypeScript
-│   └── index.ts
-├── App.tsx         # Componente principal com rotas
-└── main.tsx        # Entry point da aplicação
+eventos/
+├── backend/              # Backend Node.js/Express
+│   ├── src/
+│   │   ├── config/       # Configurações (DB, Mercado Pago)
+│   │   ├── controllers/  # Lógica de negócio
+│   │   ├── models/       # Modelos de dados
+│   │   ├── routes/       # Rotas da API
+│   │   ├── middleware/   # Auth, validação, erros
+│   │   └── server.ts     # Servidor Express
+│   ├── database/
+│   │   ├── migrations/   # Migrações do banco
+│   │   └── seeds/        # Dados iniciais
+│   └── package.json
+│
+├── src/                  # Frontend React
+│   ├── assets/          # Imagens e recursos estáticos
+│   ├── components/      # Componentes reutilizáveis
+│   │   ├── Header.tsx
+│   │   ├── Footer.tsx
+│   │   ├── Loading.tsx
+│   │   ├── ProtectedRoute.tsx
+│   │   ├── PixPayment.tsx
+│   │   ├── CreditCardPayment.tsx
+│   │   └── CreditCardVisual.tsx
+│   ├── contexts/        # Context API para estado global
+│   │   ├── AuthContext.tsx
+│   │   ├── EventContext.tsx
+│   │   ├── RegistrationContext.tsx
+│   │   └── SettingsContext.tsx
+│   ├── pages/          # Páginas da aplicação
+│   │   ├── Home.tsx
+│   │   ├── Registration.tsx
+│   │   ├── Confirmation.tsx
+│   │   ├── MeuIngresso.tsx
+│   │   ├── Login.tsx
+│   │   ├── Admin.tsx
+│   │   ├── AdminSettings.tsx
+│   │   └── CheckIn.tsx
+│   ├── services/       # Serviços de integração
+│   │   ├── api.ts
+│   │   ├── apiSelector.ts
+│   │   └── mercadopago-config.ts
+│   ├── types/          # Definições TypeScript
+│   │   └── index.ts
+│   ├── utils/          # Utilitários
+│   │   ├── formatPrice.ts
+│   │   └── generateTestData.ts
+│   ├── App.tsx         # Componente principal com rotas
+│   └── main.tsx        # Entry point da aplicação
+│
+├── docs/               # Documentação completa
+├── public/             # Arquivos estáticos públicos
+└── package.json
 ```
 
 ## 🔐 Backend API
@@ -271,8 +385,8 @@ backend/
 │   ├── middleware/      # Auth, validação, erros
 │   └── server.ts        # Servidor Express
 ├── database/
-│   ├── schema.sql       # Estrutura do banco
-│   └── seed.sql         # Dados iniciais
+│   ├── migrations/      # Migrações do banco
+│   └── seeds/           # Dados iniciais
 └── package.json
 ```
 
@@ -288,106 +402,107 @@ backend/
 - `GET /api/events/:id` - Buscar evento específico
 - `POST /api/events` - Criar evento (admin)
 - `PUT /api/events/:id` - Atualizar evento (admin)
+- `DELETE /api/events/:id` - Deletar evento (admin)
 - `GET /api/events/:id/settings` - Configurações do evento
 - `PUT /api/events/:id/settings` - Atualizar configurações (admin)
 
 **Inscrições**
 - `POST /api/registrations` - Criar inscrição
 - `GET /api/registrations` - Listar inscrições (admin)
+- `GET /api/registrations/:id` - Buscar inscrição específica
 - `PUT /api/registrations/:id` - Atualizar inscrição (admin)
+- `DELETE /api/registrations/:id` - Deletar inscrição (admin)
 - `PATCH /api/registrations/:id/checkin` - Check-in (admin)
+- `GET /api/registrations/cpf/:cpf` - Buscar inscrições por CPF
 
 **Pagamentos**
 - `POST /api/payments` - Criar pagamento
 - `GET /api/payments/:id` - Status do pagamento
 - `POST /api/payments/webhook` - Webhook Mercado Pago
 
-Para documentação completa: [`backend/README.md`](backend/README.md)
+**Perguntas de Inscrição**
+- `GET /api/events/:id/registration-questions` - Listar perguntas
+- `POST /api/events/:id/registration-questions` - Criar pergunta (admin)
+- `PUT /api/registration-questions/:id` - Atualizar pergunta (admin)
+- `DELETE /api/registration-questions/:id` - Deletar pergunta (admin)
 
-## 🗄️ Estrutura do Banco de Dados (Supabase/Postgres)
+Para documentação completa: [`backend/README.md`](./backend/README.md)
 
-### Tabela: events
-```sql
-CREATE TABLE events (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  date TIMESTAMP NOT NULL,
-  location VARCHAR(255),
-  price DECIMAL(10, 2),
-  image_url VARCHAR(500),
-  max_participants INTEGER,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
+## 🗄️ Estrutura do Banco de Dados
 
-### Tabela: registrations
-```sql
-CREATE TABLE registrations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  event_id UUID REFERENCES events(id),
-  name VARCHAR(255) NOT NULL,
-  email VARCHAR(255) NOT NULL,
-  phone VARCHAR(20),
-  cpf VARCHAR(14),
-  address TEXT,
-  payment_status VARCHAR(20) DEFAULT 'pending',
-  payment_id VARCHAR(100),
-  checked_in BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-### Tabela: users
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  role VARCHAR(20) DEFAULT 'user',
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
+O sistema utiliza PostgreSQL gerenciado pelo backend. Para ver a estrutura completa das tabelas e migrações, consulte [`backend/README.md`](./backend/README.md) e as migrações em `backend/database/migrations/`.
 
 ## 🎯 Rotas da Aplicação
 
+### Rotas Públicas
 - `/` - Página inicial do evento
 - `/inscricao` - Formulário de inscrição (2 etapas)
 - `/confirmacao` - Página de confirmação com ingresso
+- `/meu-ingresso` - Consulta de ingressos por CPF
 - `/login` - Login administrativo
-- `/admin` - Painel de administração (protegido)
+
+### Rotas Protegidas (Admin)
+- `/admin` - Painel de administração
+- `/admin/configuracoes` - Configurações do evento
+- `/admin/checkin` - Sistema de check-in com QR Code
 
 ## 💳 Integração com Mercado Pago
 
-O sistema está preparado para integrar com a API do Mercado Pago. Para implementar completamente:
+O sistema possui integração completa com Mercado Pago para processamento de pagamentos:
+
+### Métodos de Pagamento Suportados
+- **PIX**: Geração automática de QR Code e verificação de pagamento
+- **Cartão de Crédito**: Processamento seguro via SDK oficial do Mercado Pago
+
+### Configuração
 
 1. Obtenha suas credenciais no [Portal de Desenvolvedores do Mercado Pago](https://www.mercadopago.com.br/developers)
-2. Configure a chave pública no arquivo `.env`
-3. Implemente o processamento de pagamento no backend
-4. Configure os webhooks para receber notificações de pagamento
+2. Configure as chaves no arquivo `.env`:
+   - `MERCADOPAGO_ACCESS_TOKEN` (backend)
+   - `VITE_MERCADO_PAGO_PUBLIC_KEY` (frontend)
+3. Configure os webhooks para receber notificações de pagamento
+
+Para documentação completa, veja: [`docs/MERCADOPAGO_INTEGRATION.md`](./docs/MERCADOPAGO_INTEGRATION.md)
 
 ## 🔒 Segurança
 
+### Frontend
 - Autenticação via JWT
 - Proteção de rotas administrativas
-- Validação de dados no frontend
+- Validação de dados nos formulários
+- Sanitização de inputs
 - Armazenamento seguro de tokens
-- Integração com Supabase RLS (Row Level Security)
+
+### Backend
+- Senhas hasheadas com bcrypt
+- Autenticação via JWT com expiração
+- Validação de dados com express-validator
+- CORS configurado
+- Proteção de rotas admin
+- Prevenção de SQL injection
+- Rate limiting (recomendado)
+
+### Banco de Dados
+- Migrações versionadas
+- Índices otimizados
+- Constraints de integridade
+- Validação de dados no nível do banco
 
 ## 📱 Responsividade
 
 O sistema é totalmente responsivo e otimizado para:
-- Desktop (1920px+)
-- Tablet (768px - 1024px)
-- Mobile (< 768px)
+- **Mobile** (< 768px)
+- **Tablet** (768px - 1024px)
+- **Desktop** (> 1024px)
 
 ## 🎨 Paleta de Cores
 
 ```css
---color-primary: #d4af37        /* Dourado */
---color-primary-light: #f4d03f  /* Dourado claro */
---color-secondary: #f5f5dc      /* Bege */
---color-white: #ffffff          /* Branco */
+--color-primary: #D4AF37        /* Dourado Principal */
+--color-primary-dark: #B8860B  /* Dourado Escuro */
+--color-secondary: #F5F5DC      /* Bege Claro */
+--color-secondary-dark: #E8DCC4 /* Bege Escuro */
+--color-white: #FFFFFF         /* Branco */
 --color-text: #333333           /* Texto escuro */
 ```
 
@@ -403,8 +518,14 @@ npm run dev-offline
 # Build para produção
 npm run build
 
+# Build offline
+npm run build:offline
+
 # Preview da build
 npm run preview
+
+# Preview offline
+npm run preview:offline
 
 # Lint
 npm run lint
@@ -422,7 +543,44 @@ npm run dev-offline
 - Email: `admin@igreja.com`
 - Senha: `admin123`
 
-Veja a documentação completa em [`docs/OFFLINE_MODE.md`](docs/OFFLINE_MODE.md)
+Veja a documentação completa em [`docs/OFFLINE_MODE.md`](./docs/OFFLINE_MODE.md)
+
+## 📚 Documentação Completa
+
+### 🔥 Documentação Backend
+- 🚀 [`backend/README.md`](./backend/README.md) - Documentação técnica da API
+- 📖 [`docs/CONFIGURACAO_PRODUCAO.md`](./docs/CONFIGURACAO_PRODUCAO.md) - Guia completo de configuração
+
+### 📁 Documentação Frontend
+Toda a documentação está organizada na pasta [`docs/`](./docs/):
+
+- 📖 [`docs/README.md`](./docs/README.md) - Índice da documentação
+- ⚡ [`docs/COMANDOS.md`](./docs/COMANDOS.md) - Referência rápida de comandos
+- 🏗️ [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) - Arquitetura e estrutura técnica
+- 🔌 [`docs/OFFLINE_MODE.md`](./docs/OFFLINE_MODE.md) - Modo offline com mocks
+- 💳 [`docs/MERCADOPAGO_INTEGRATION.md`](./docs/MERCADOPAGO_INTEGRATION.md) - Integração de pagamentos
+- 🎫 [`docs/INGRESSO.md`](./docs/INGRESSO.md) - Página de confirmação com ingresso
+- 📋 [`docs/PROJECT_SUMMARY.md`](./docs/PROJECT_SUMMARY.md) - Resumo do projeto
+- 🎨 [`docs/ATUALIZACAO_VISUAL.md`](./docs/ATUALIZACAO_VISUAL.md) - Atualização visual
+- 🧪 [`docs/TESTE_PIX_LOCAL.md`](./docs/TESTE_PIX_LOCAL.md) - Testes de PIX local
+
+## 🐛 Troubleshooting
+
+### Erro de conexão com o backend
+- Verifique se o backend está rodando na porta 3000
+- Confirme se `VITE_API_URL` está correto no `.env`
+
+### Erro de conexão com o banco
+- Verifique se o PostgreSQL está rodando
+- Confirme as credenciais no `backend/.env`
+
+### Erro no Mercado Pago
+- Verifique se as chaves estão corretas
+- Confirme se está usando credenciais de teste ou produção
+
+### Problemas com migrações
+- Certifique-se de ter criado o banco de dados
+- Execute `npm run migrate` novamente
 
 ## 📄 Licença
 
@@ -436,24 +594,6 @@ Para contribuir com o projeto:
 3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
 4. Push para a branch (`git push origin feature/NovaFuncionalidade`)
 5. Abra um Pull Request
-
-## 📚 Documentação Completa
-
-### 🔥 Documentação Backend (NOVO!)
-- 🚀 [`INSTALACAO_BACKEND.md`](INSTALACAO_BACKEND.md) - **Guia completo de instalação do backend**
-- 📖 [`backend/README.md`](backend/README.md) - Documentação técnica da API
-
-### 📁 Documentação Frontend
-Toda a documentação está organizada na pasta [`docs/`](docs/):
-
-- 📖 [`QUICKSTART.md`](docs/QUICKSTART.md) - Guia de início rápido
-- ⚙️ [`SETUP.md`](docs/SETUP.md) - Configuração completa passo a passo
-- 🏗️ [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) - Arquitetura e estrutura técnica
-- 🔌 [`OFFLINE_MODE.md`](docs/OFFLINE_MODE.md) - Modo offline com mocks
-- 💳 [`MERCADOPAGO_INTEGRATION.md`](docs/MERCADOPAGO_INTEGRATION.md) - Integração de pagamentos
-- ⌨️ [`COMANDOS.md`](docs/COMANDOS.md) - Referência rápida de comandos
-- 🎫 [`INGRESSO.md`](docs/INGRESSO.md) - Página de confirmação com ingresso
-- 📋 [`PROJECT_SUMMARY.md`](docs/PROJECT_SUMMARY.md) - Resumo do projeto
 
 ## 📞 Suporte
 

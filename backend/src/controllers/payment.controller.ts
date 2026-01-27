@@ -38,11 +38,18 @@ export class PaymentController {
       if (!process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN === 'TEST-ACCESS-TOKEN') {
         // Retornar sucesso simulado se o Mercado Pago não estiver configurado
         const simulatedPaymentId = 'SIMULATED-' + Date.now();
+        
+        // Normalizar método de pagamento para salvar como 'pix' ou 'credit_card'
+        const isCreditCardSimulated = payment_method_id === 'credit_card' ||
+          ['visa', 'master', 'amex', 'elo', 'hipercard', 'diners'].includes(payment_method_id);
+        const normalizedPaymentMethodSimulated = payment_method_id === 'pix' ? 'pix' :
+          isCreditCardSimulated ? 'credit_card' : payment_method_id;
+        
         await RegistrationModel.updatePaymentStatus(
           registration.id,
           'approved',
           simulatedPaymentId,
-          payment_method_id, // Salvar método de pagamento
+          normalizedPaymentMethodSimulated, // Salvar método de pagamento normalizado
           parseFloat(transaction_amount) // Salvar valor
         );
 
@@ -174,12 +181,26 @@ export class PaymentController {
         payment_method_id: result.payment_method_id,
       });
 
+      // Normalizar método de pagamento para salvar como 'pix' ou 'credit_card'
+      let normalizedPaymentMethod = payment_method_id;
+      if (payment_method_id === 'pix') {
+        normalizedPaymentMethod = 'pix';
+      } else if (isCreditCard || ['visa', 'master', 'amex', 'elo', 'hipercard', 'diners'].includes(payment_method_id)) {
+        normalizedPaymentMethod = 'credit_card';
+      }
+
+      console.log('💾 Salvando método de pagamento:', {
+        original: payment_method_id,
+        normalized: normalizedPaymentMethod,
+        registration_id: registration.id
+      });
+
       // Atualizar inscrição com o ID do pagamento e informações completas
       await RegistrationModel.updatePaymentStatus(
         registration.id,
         result.status === 'approved' ? 'approved' : 'pending',
         result.id?.toString(),
-        payment_method_id, // Salvar método de pagamento
+        normalizedPaymentMethod || payment_method_id, // Garantir que sempre tenha um valor
         parseFloat(transaction_amount) // Salvar valor
       );
 
@@ -343,6 +364,9 @@ export class PaymentController {
         const isTestWebhook = !isProduction && !hasWebhookSecret;
 
         let status: string;
+        let paymentMethod = registration.payment_method; // Manter o método existente se já tiver
+        let paymentAmount = registration.payment_amount; // Manter o valor existente se já tiver
+        let paymentResult: any = null;
 
         if (isTestWebhook) {
           // Apenas em desenvolvimento sem secret: modo de teste, assumir aprovado
@@ -355,11 +379,30 @@ export class PaymentController {
           console.log(`   Webhook Secret configurado: ${hasWebhookSecret ? 'SIM' : 'NÃO'}`);
           
           try {
-            const result = await payment.get({ id: paymentId });
-            console.log(`📊 Status do pagamento ${paymentId} no Mercado Pago: ${result.status}`);
+            paymentResult = await payment.get({ id: paymentId });
+            console.log(`📊 Status do pagamento ${paymentId} no Mercado Pago: ${paymentResult.status}`);
 
-            status = result.status === 'approved' ? 'approved' :
-              result.status === 'rejected' ? 'rejected' : 'pending';
+            status = paymentResult.status === 'approved' ? 'approved' :
+              paymentResult.status === 'rejected' ? 'rejected' : 'pending';
+            
+            // Extrair método de pagamento e valor do resultado
+            if (paymentResult.payment_method_id) {
+              const mpMethod = paymentResult.payment_method_id;
+              // Normalizar para 'pix' ou 'credit_card'
+              if (mpMethod === 'pix') {
+                paymentMethod = 'pix';
+              } else if (mpMethod === 'credit_card' || ['visa', 'master', 'amex', 'elo', 'hipercard', 'diners'].includes(mpMethod)) {
+                paymentMethod = 'credit_card';
+              } else {
+                paymentMethod = mpMethod; // Manter original se não for reconhecido
+              }
+              console.log('📊 Webhook: Método de pagamento extraído:', { original: mpMethod, normalized: paymentMethod });
+            } else {
+              console.log('⚠️ Webhook: payment_method_id não encontrado no resultado do Mercado Pago');
+            }
+            if (paymentResult.transaction_amount) {
+              paymentAmount = parseFloat(paymentResult.transaction_amount);
+            }
           } catch (error: any) {
             console.error(`❌ Erro ao consultar status do pagamento ${paymentId}:`, error.message);
             // Em caso de erro ao consultar, manter como pending (não aprovar automaticamente)
@@ -368,11 +411,24 @@ export class PaymentController {
           }
         }
 
-        // Atualizar status do pagamento
+        // Garantir que o método de pagamento seja preservado se já existir
+        const finalPaymentMethod = paymentMethod || registration.payment_method;
+        const finalPaymentAmount = paymentAmount || registration.payment_amount;
+
+        console.log('💾 Webhook: Salvando método de pagamento:', {
+          paymentMethod: finalPaymentMethod,
+          registration_id: registration.id,
+          paymentId: paymentId.toString(),
+          hadExistingMethod: !!registration.payment_method
+        });
+
+        // Atualizar status do pagamento com todas as informações
         await RegistrationModel.updatePaymentStatus(
           registration.id,
           status,
-          paymentId.toString()
+          paymentId.toString(),
+          finalPaymentMethod, // Usar método extraído ou manter o existente
+          finalPaymentAmount // Usar valor extraído ou manter o existente
         );
 
         console.log(`✅ Status da inscrição ${registration.id} atualizado para: ${status}`);

@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
-import type { Registration } from '../types';
+import type { Registration, RegistrationAnswer, RegistrationQuestion } from '../types';
 import { api } from '../services/apiSelector';
-import { ArrowLeft, Search, Edit2, X, CheckCircle, Circle, User, Trash2, Calendar, CreditCard, DollarSign, FileText, Mail, Phone, MapPin, Clock, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Search, Edit2, X, CheckCircle, Circle, User, Trash2, Calendar, CreditCard, DollarSign, FileText, Mail, Phone, Clock, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import Loading from '../components/Loading';
 
 const Admin: React.FC = () => {
@@ -24,6 +24,9 @@ const Admin: React.FC = () => {
   const [registrationToDelete, setRegistrationToDelete] = useState<Registration | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedDetailsRegistration, setSelectedDetailsRegistration] = useState<Registration | null>(null);
+  const [registrationAnswers, setRegistrationAnswers] = useState<RegistrationAnswer[]>([]);
+  const [registrationQuestions, setRegistrationQuestions] = useState<RegistrationQuestion[]>([]);
+  const [loadingAnswers, setLoadingAnswers] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'admin') {
@@ -136,7 +139,7 @@ const Admin: React.FC = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleRowClick = (registration: Registration, e: React.MouseEvent) => {
+  const handleRowClick = async (registration: Registration, e: React.MouseEvent) => {
     // Não abrir modal se clicar em botões ou links
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('a')) {
@@ -145,6 +148,32 @@ const Admin: React.FC = () => {
     
     setSelectedDetailsRegistration(registration);
     setIsDetailsModalOpen(true);
+    setLoadingAnswers(true);
+    
+    try {
+      // Buscar a inscrição completa com respostas
+      const fullRegistration: any = await api.getRegistrationById(registration.id);
+      
+      // Se a inscrição tiver respostas (answers), usar elas
+      if (fullRegistration.answers && Array.isArray(fullRegistration.answers)) {
+        setRegistrationAnswers(fullRegistration.answers);
+        
+        // Buscar as perguntas para exibir o texto completo
+        if (fullRegistration.event_id) {
+          const questions = await api.getRegistrationQuestions(fullRegistration.event_id);
+          setRegistrationQuestions(questions);
+        }
+      } else {
+        setRegistrationAnswers([]);
+        setRegistrationQuestions([]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar respostas:', error);
+      setRegistrationAnswers([]);
+      setRegistrationQuestions([]);
+    } finally {
+      setLoadingAnswers(false);
+    }
   };
 
   const handleDeleteClick = (registration: Registration) => {
@@ -1048,15 +1077,6 @@ const Admin: React.FC = () => {
                     <p className="text-sm text-gray-600 mb-1">CPF</p>
                     <p className="text-gray-800 font-medium">{selectedDetailsRegistration.cpf || 'Não informado'}</p>
                   </div>
-                  {selectedDetailsRegistration.address && (
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        Endereço
-                      </p>
-                      <p className="text-gray-800 font-medium">{selectedDetailsRegistration.address}</p>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -1081,16 +1101,14 @@ const Admin: React.FC = () => {
                       {selectedDetailsRegistration.payment_status === 'rejected' && '✗ Rejeitado'}
                     </span>
                   </div>
-                  {selectedDetailsRegistration.payment_method && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Método de Pagamento</p>
-                      <p className="text-gray-800 font-medium flex items-center gap-2">
-                        {selectedDetailsRegistration.payment_method === 'pix' ? '📱 PIX' : 
-                         selectedDetailsRegistration.payment_method === 'credit_card' ? '💳 Cartão de Crédito' : 
-                         selectedDetailsRegistration.payment_method}
-                      </p>
-                    </div>
-                  )}
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Método de Pagamento</p>
+                    <p className="text-gray-800 font-medium flex items-center gap-2">
+                      {selectedDetailsRegistration.selected_payment_method === 'pix' ? '📱 PIX' : 
+                       selectedDetailsRegistration.selected_payment_method === 'credit_card' ? '💳 Cartão de Crédito' : 
+                       selectedDetailsRegistration.selected_payment_method || 'Não informado'}
+                    </p>
+                  </div>
                   {selectedDetailsRegistration.payment_amount && (
                     <div>
                       <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
@@ -1164,6 +1182,51 @@ const Admin: React.FC = () => {
                   )}
                 </div>
               </div>
+
+              {/* Respostas das Perguntas */}
+              {loadingAnswers ? (
+                <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
+                  <div className="flex items-center justify-center py-4">
+                    <div className="w-6 h-6 border-3 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="ml-3 text-gray-600">Carregando respostas...</span>
+                  </div>
+                </div>
+              ) : registrationAnswers.length > 0 ? (
+                <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Respostas das Perguntas
+                  </h3>
+                  <div className="space-y-4">
+                    {registrationAnswers.map((answer) => {
+                      const question = registrationQuestions.find(q => q.id === answer.question_id);
+                      return (
+                        <div key={answer.id} className="bg-white rounded-lg p-4 border border-purple-200">
+                          <p className="text-sm font-semibold text-gray-700 mb-2">
+                            {question?.question_text || 'Pergunta não encontrada'}
+                          </p>
+                          <div className="text-gray-800">
+                            {answer.answer_text ? (
+                              <p className="text-base">{answer.answer_text}</p>
+                            ) : answer.answer_options && answer.answer_options.length > 0 ? (
+                              <div className="space-y-1">
+                                {answer.answer_options.map((option, index) => (
+                                  <div key={index} className="flex items-center gap-2">
+                                    <CheckCircle className="w-4 h-4 text-purple-600" />
+                                    <span className="text-base">{option}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-gray-500 italic">Sem resposta</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
 
               {/* Informações do Sistema */}
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">

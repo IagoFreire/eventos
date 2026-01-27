@@ -40,7 +40,6 @@ O ingresso possui um design elegante e profissional com:
 - Email
 - Telefone
 - CPF
-- Endereço (opcional)
 
 #### Verificação
 - Código da inscrição (ID único)

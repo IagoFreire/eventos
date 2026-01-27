@@ -75,53 +75,6 @@ export const generateRandomPhone = (): string => {
   return `(${selectedDDD}) ${formatted}`;
 };
 
-// Função para gerar endereço aleatório
-export const generateRandomAddress = (): string => {
-  const streets = [
-    'Rua das Flores', 'Avenida Principal', 'Rua do Comércio', 'Avenida Central',
-    'Rua da Paz', 'Avenida dos Trabalhadores', 'Rua São Paulo', 'Avenida Brasil',
-    'Rua das Palmeiras', 'Avenida da Liberdade', 'Rua do Sol', 'Avenida Paulista'
-  ];
-  
-  const neighborhoods = [
-    'Centro', 'Jardim das Flores', 'Vila Nova', 'Bela Vista', 'Copacabana',
-    'Ipanema', 'Barra da Tijuca', 'Moema', 'Vila Madalena', 'Pinheiros'
-  ];
-  
-  const cities = [
-    'São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Curitiba', 'Porto Alegre',
-    'Brasília', 'Salvador', 'Recife', 'Fortaleza', 'Manaus'
-  ];
-  
-  const states = ['SP', 'RJ', 'MG', 'PR', 'RS', 'DF', 'BA', 'PE', 'CE', 'AM'];
-  
-  const street = streets[Math.floor(Math.random() * streets.length)];
-  const number = Math.floor(1 + Math.random() * 9999);
-  const neighborhood = neighborhoods[Math.floor(Math.random() * neighborhoods.length)];
-  const city = cities[Math.floor(Math.random() * cities.length)];
-  const state = states[Math.floor(Math.random() * states.length)];
-  
-  return `${street}, ${number}, ${neighborhood}, ${city} - ${state}`;
-};
-
-// CEPs válidos conhecidos para teste
-const validCeps = [
-  '01310-100', // Avenida Paulista, São Paulo - SP
-  '20040-020', // Praça Mauá, Rio de Janeiro - RJ
-  '30130-010', // Praça Sete, Belo Horizonte - MG
-  '80020-310', // Rua XV de Novembro, Curitiba - PR
-  '90010-150', // Praça da Matriz, Porto Alegre - RS
-  '70040-020', // Esplanada dos Ministérios, Brasília - DF
-  '40020-000', // Pelourinho, Salvador - BA
-  '50010-000', // Recife Antigo, Recife - PE
-  '60060-100', // Centro, Fortaleza - CE
-  '69020-000', // Centro, Manaus - AM
-];
-
-// Função para gerar CEP válido aleatório
-export const generateRandomCep = (): string => {
-  return validCeps[Math.floor(Math.random() * validCeps.length)];
-};
 
 // Função principal para gerar todos os dados de teste
 export const generateTestData = () => {
@@ -129,15 +82,11 @@ export const generateTestData = () => {
   const cpf = generateValidCPF();
   const email = generateRandomEmail(name);
   const phone = generateRandomPhone();
-  const address = generateRandomAddress();
-  const cep = generateRandomCep();
   
   return {
     name,
     cpf,
     email,
     phone,
-    address,
-    cep,
   };
 };

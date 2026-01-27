@@ -25,7 +25,14 @@ INSERT INTO event_settings (
   church_contact_email,
   church_instagram,
   church_facebook,
-  church_website
+  church_website,
+  show_contact,
+  show_social,
+  show_contact_phone,
+  show_contact_email,
+  show_social_instagram,
+  show_social_facebook,
+  show_social_website
 )
 SELECT 
   e.id,
@@ -44,7 +51,14 @@ SELECT
   'contato@igrejacentral.com.br',
   '@igrejacentral',
   'igrejacentral',
-  'https://igrejacentral.com.br'
+  'https://igrejacentral.com.br',
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true
 FROM events e
 WHERE e.title = 'Encontro de Jovens 2026'
 AND NOT EXISTS (

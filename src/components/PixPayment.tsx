@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Copy, CheckCircle, Clock, QrCode as QrCodeIcon } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { formatPrice } from '../utils/formatPrice';
@@ -12,8 +12,6 @@ interface PixPaymentProps {
   onPaymentConfirmed?: () => void;
   isTestMode?: boolean;
   registrationId?: string;
-  paymentId?: string;
-  checkPaymentStatus?: (paymentId: string) => Promise<any>;
   checkRegistrationStatus?: (registrationId: string) => Promise<any>;
 }
 
@@ -25,13 +23,12 @@ const PixPayment: React.FC<PixPaymentProps> = ({
   onPaymentConfirmed,
   isTestMode = false,
   registrationId,
-  paymentId,
-  checkPaymentStatus,
   checkRegistrationStatus,
 }) => {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutos em segundos
-  const [isChecking, setIsChecking] = useState(false);
+  const isCheckingRef = useRef(false);
+  const checkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Detectar se está em produção (chave pública não começa com TEST-)
   const isProduction = publicKey && !publicKey.startsWith('TEST-') && publicKey.startsWith('APP_USR-');
@@ -51,85 +48,84 @@ const PixPayment: React.FC<PixPaymentProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Polling para verificar status do pagamento automaticamente
+  // Função para verificar status do pagamento (usando useCallback para estabilidade)
+  const performCheck = useCallback(async () => {
+    if (!registrationId || !checkRegistrationStatus || isCheckingRef.current) {
+      return false;
+    }
+
+    isCheckingRef.current = true;
+    try {
+      // Verificar status da inscrição no banco de dados (atualizado pelo webhook)
+      const registration = await checkRegistrationStatus(registrationId);
+      
+      if (registration?.payment_status === 'approved') {
+        // Pagamento aprovado - confirmar e parar polling
+        if (checkIntervalRef.current) {
+          clearInterval(checkIntervalRef.current);
+          checkIntervalRef.current = null;
+        }
+        onPaymentConfirmed?.();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      // Erro silencioso - continua tentando sem mostrar mensagens
+      console.error('Erro ao verificar status do pagamento:', error);
+      return false;
+    } finally {
+      isCheckingRef.current = false;
+    }
+  }, [registrationId, checkRegistrationStatus, onPaymentConfirmed]);
+
+  // Polling para verificar status do pagamento automaticamente - APENAS no banco de dados
   useEffect(() => {
     // Não fazer polling em modo de teste (usa botão manual)
     if (isTestMode || !onPaymentConfirmed) {
       return;
     }
 
-    // Priorizar verificação da inscrição no banco (atualizada pelo webhook)
-    // Se não tiver função de verificar inscrição, usar verificação do pagamento
-    const shouldCheckRegistration = registrationId && checkRegistrationStatus;
-    const shouldCheckPayment = paymentId && checkPaymentStatus;
-
-    if (!shouldCheckRegistration && !shouldCheckPayment) {
+    // Verificar APENAS no banco de dados (atualizado pelo webhook)
+    if (!registrationId || !checkRegistrationStatus) {
       return;
     }
 
-    console.log('🔄 Iniciando verificação automática do status do pagamento...');
+    // Verificar imediatamente ao montar
+    performCheck();
 
     // Verificar a cada 5 segundos
-    const checkInterval = setInterval(async () => {
-      if (isChecking) return; // Evitar múltiplas verificações simultâneas
-      
-      setIsChecking(true);
-      try {
-        let isApproved = false;
+    checkIntervalRef.current = setInterval(() => {
+      performCheck();
+    }, 5000);
 
-        // Primeiro, verificar status da inscrição no banco (mais confiável - atualizado pelo webhook)
-        if (shouldCheckRegistration) {
-          console.log(`🔍 Verificando status da inscrição ${registrationId} no banco...`);
-          const registration = await checkRegistrationStatus(registrationId);
-          
-          if (registration?.payment_status === 'approved') {
-            console.log('✅ Pagamento aprovado detectado no banco de dados!');
-            isApproved = true;
-          } else {
-            console.log(`📊 Status da inscrição: ${registration?.payment_status || 'desconhecido'}`);
-          }
-        }
-
-        // Se não estiver aprovado no banco, verificar status no Mercado Pago
-        if (!isApproved && shouldCheckPayment) {
-          console.log(`🔍 Verificando status do pagamento ${paymentId} no Mercado Pago...`);
-          const paymentStatus = await checkPaymentStatus(paymentId);
-          
-          console.log('📊 Status do pagamento:', paymentStatus);
-          
-          if (paymentStatus?.status === 'approved') {
-            console.log('✅ Pagamento aprovado detectado no Mercado Pago!');
-            isApproved = true;
-          } else if (paymentStatus?.status === 'rejected') {
-            console.log('❌ Pagamento rejeitado');
-            clearInterval(checkInterval);
-            toast.error('❌ Pagamento foi rejeitado. Por favor, tente novamente.');
-            setIsChecking(false);
-            return;
-          }
-        }
-
-        // Se aprovado, confirmar e parar polling
-        if (isApproved) {
-          console.log('✅ Confirmando pagamento automaticamente...');
-          clearInterval(checkInterval);
-          onPaymentConfirmed();
-        }
-        // Se estiver pending ou outro status, continua verificando
-      } catch (error) {
-        console.error('Erro ao verificar status do pagamento:', error);
-        // Não limpar o intervalo em caso de erro, continua tentando
-      } finally {
-        setIsChecking(false);
+    // Page Visibility API - verificar quando a página volta do background (Safari iOS)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Página voltou ao foreground - verificar imediatamente
+        console.log('📱 Página voltou ao foreground, verificando pagamento...');
+        performCheck();
       }
-    }, 5000); // Verificar a cada 5 segundos
-
-    // Limpar intervalo quando componente desmontar
-    return () => {
-      console.log('🛑 Parando verificação automática do pagamento');
-      clearInterval(checkInterval);
     };
-  }, [registrationId, paymentId, checkRegistrationStatus, checkPaymentStatus, onPaymentConfirmed, isTestMode, isChecking]);
+
+    // Focus event - quando a janela recebe foco novamente
+    const handleFocus = () => {
+      console.log('📱 Janela recebeu foco, verificando pagamento...');
+      performCheck();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    // Limpar intervalo e listeners quando componente desmontar
+    return () => {
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+        checkIntervalRef.current = null;
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [isTestMode, onPaymentConfirmed, performCheck]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -176,11 +172,12 @@ const PixPayment: React.FC<PixPaymentProps> = ({
             <p className="text-gray-700 mb-4 text-center font-medium">
               Escaneie o QR Code com o app do seu banco
             </p>
-            <div className="bg-white p-4 rounded-lg border-4 border-[#D4AF37] shadow-md">
+            <div className="bg-white rounded-lg border-4 border-[#D4AF37] shadow-md flex items-center justify-center">
               <img
                 src={`data:image/png;base64,${qrCodeBase64}`}
                 alt="QR Code PIX"
-                className="w-64 h-64"
+                className="w-full max-w-[200px] md:max-w-[180px] h-auto aspect-square object-contain"
+                style={{ maxWidth: '100%', height: 'auto', maxHeight: '200px' }}
               />
             </div>
           </div>

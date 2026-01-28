@@ -86,7 +86,13 @@ export class RegistrationModel {
   // Buscar inscrição por CPF e evento
   static async findByCpfAndEvent(cpf: string, eventId: string): Promise<Registration | null> {
     const result = await pool.query(
-      'SELECT * FROM registrations WHERE cpf = $1 AND event_id = $2',
+      `SELECT id, event_id, name, email, phone, cpf, payment_status, payment_id, 
+              payment_method, selected_payment_method, payment_amount, checked_in,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
+              CASE WHEN payment_date IS NOT NULL THEN to_char(payment_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as payment_date,
+              CASE WHEN checked_in_date IS NOT NULL THEN to_char(checked_in_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as checked_in_date
+       FROM registrations WHERE cpf = $1 AND event_id = $2`,
       [cpf, eventId]
     );
     const converted = formatDatesForResponse(result.rows);
@@ -96,7 +102,13 @@ export class RegistrationModel {
   // Buscar inscrição por email e evento
   static async findByEmailAndEvent(email: string, eventId: string): Promise<Registration | null> {
     const result = await pool.query(
-      'SELECT * FROM registrations WHERE email = $1 AND event_id = $2',
+      `SELECT id, event_id, name, email, phone, cpf, payment_status, payment_id, 
+              payment_method, selected_payment_method, payment_amount, checked_in,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
+              CASE WHEN payment_date IS NOT NULL THEN to_char(payment_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as payment_date,
+              CASE WHEN checked_in_date IS NOT NULL THEN to_char(checked_in_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as checked_in_date
+       FROM registrations WHERE email = $1 AND event_id = $2`,
       [email, eventId]
     );
     const converted = formatDatesForResponse(result.rows);
@@ -108,7 +120,12 @@ export class RegistrationModel {
     const result = await pool.query(
       `INSERT INTO registrations (event_id, name, email, phone, cpf, payment_status)
        VALUES ($1, $2, $3, $4, $5, 'pending')
-       RETURNING *`,
+       RETURNING id, event_id, name, email, phone, cpf, payment_status, payment_id, 
+                 payment_method, selected_payment_method, payment_amount, checked_in,
+                 to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                 to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
+                 CASE WHEN payment_date IS NOT NULL THEN to_char(payment_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as payment_date,
+                 CASE WHEN checked_in_date IS NOT NULL THEN to_char(checked_in_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as checked_in_date`,
       [registration.event_id, registration.name, registration.email, registration.phone, registration.cpf]
     );
     const converted = formatDatesForResponse(result.rows);
@@ -134,7 +151,13 @@ export class RegistrationModel {
     if (fields.length === 0) return null;
 
     values.push(id);
-    const query = `UPDATE registrations SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${paramCount} RETURNING *`;
+    const query = `UPDATE registrations SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${paramCount} 
+                   RETURNING id, event_id, name, email, phone, cpf, payment_status, payment_id, 
+                             payment_method, selected_payment_method, payment_amount, checked_in,
+                             to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                             to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
+                             CASE WHEN payment_date IS NOT NULL THEN to_char(payment_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as payment_date,
+                             CASE WHEN checked_in_date IS NOT NULL THEN to_char(checked_in_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as checked_in_date`;
 
     const result = await pool.query(query, values);
     const converted = formatDatesForResponse(result.rows);
@@ -195,7 +218,13 @@ export class RegistrationModel {
     
     values.push(id);
     
-    const query = `UPDATE registrations SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`;
+    const query = `UPDATE registrations SET ${updates.join(', ')} WHERE id = $${paramCount} 
+                   RETURNING id, event_id, name, email, phone, cpf, payment_status, payment_id, 
+                             payment_method, selected_payment_method, payment_amount, checked_in,
+                             to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                             to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
+                             CASE WHEN payment_date IS NOT NULL THEN to_char(payment_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as payment_date,
+                             CASE WHEN checked_in_date IS NOT NULL THEN to_char(checked_in_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as checked_in_date`;
     
     const result = await pool.query(query, values);
     const converted = formatDatesForResponse(result.rows);
@@ -222,7 +251,13 @@ export class RegistrationModel {
     const checkInDateQuery = newCheckedInStatus ? 'NOW()' : 'NULL';
     
     const result = await pool.query(
-      `UPDATE registrations SET checked_in = $1, checked_in_date = ${checkInDateQuery} WHERE id = $2 RETURNING *`,
+      `UPDATE registrations SET checked_in = $1, checked_in_date = ${checkInDateQuery} WHERE id = $2 
+       RETURNING id, event_id, name, email, phone, cpf, payment_status, payment_id, 
+                 payment_method, selected_payment_method, payment_amount, checked_in,
+                 to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                 to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
+                 CASE WHEN payment_date IS NOT NULL THEN to_char(payment_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as payment_date,
+                 CASE WHEN checked_in_date IS NOT NULL THEN to_char(checked_in_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as checked_in_date`,
       [newCheckedInStatus, id]
     );
     const converted = formatDatesForResponse(result.rows);
@@ -250,7 +285,13 @@ export class RegistrationModel {
     
     // Marcar check-in usando NOW() do PostgreSQL para garantir UTC
     const result = await pool.query(
-      'UPDATE registrations SET checked_in = true, checked_in_date = NOW() WHERE id = $1 RETURNING *',
+      `UPDATE registrations SET checked_in = true, checked_in_date = NOW() WHERE id = $1 
+       RETURNING id, event_id, name, email, phone, cpf, payment_status, payment_id, 
+                 payment_method, selected_payment_method, payment_amount, checked_in,
+                 to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                 to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
+                 CASE WHEN payment_date IS NOT NULL THEN to_char(payment_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as payment_date,
+                 CASE WHEN checked_in_date IS NOT NULL THEN to_char(checked_in_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as checked_in_date`,
       [id]
     );
     const converted = formatDatesForResponse(result.rows);
@@ -291,7 +332,13 @@ export class RegistrationModel {
     
     // Busca tanto com formatação quanto sem formatação
     const result = await pool.query(
-      `SELECT * FROM registrations 
+      `SELECT id, event_id, name, email, phone, cpf, payment_status, payment_id, 
+              payment_method, selected_payment_method, payment_amount, checked_in,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
+              CASE WHEN payment_date IS NOT NULL THEN to_char(payment_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as payment_date,
+              CASE WHEN checked_in_date IS NOT NULL THEN to_char(checked_in_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as checked_in_date
+       FROM registrations 
        WHERE (REPLACE(REPLACE(REPLACE(cpf, '.', ''), '-', ''), ' ', '') = $1 OR cpf = $2)
        AND payment_status = 'approved' 
        ORDER BY created_at DESC`,
@@ -303,7 +350,13 @@ export class RegistrationModel {
   // Buscar inscrição pendente por email e evento
   static async findPendingByEmailAndEvent(email: string, eventId: string): Promise<Registration | null> {
     const result = await pool.query(
-      "SELECT * FROM registrations WHERE email = $1 AND event_id = $2 AND payment_status = 'pending' ORDER BY created_at DESC LIMIT 1",
+      `SELECT id, event_id, name, email, phone, cpf, payment_status, payment_id, 
+              payment_method, selected_payment_method, payment_amount, checked_in,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
+              CASE WHEN payment_date IS NOT NULL THEN to_char(payment_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as payment_date,
+              CASE WHEN checked_in_date IS NOT NULL THEN to_char(checked_in_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as checked_in_date
+       FROM registrations WHERE email = $1 AND event_id = $2 AND payment_status = 'pending' ORDER BY created_at DESC LIMIT 1`,
       [email, eventId]
     );
     const converted = formatDatesForResponse(result.rows);
@@ -313,7 +366,13 @@ export class RegistrationModel {
   // Buscar inscrição por payment_id
   static async findByPaymentId(paymentId: string): Promise<Registration | null> {
     const result = await pool.query(
-      'SELECT * FROM registrations WHERE payment_id = $1',
+      `SELECT id, event_id, name, email, phone, cpf, payment_status, payment_id, 
+              payment_method, selected_payment_method, payment_amount, checked_in,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
+              CASE WHEN payment_date IS NOT NULL THEN to_char(payment_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as payment_date,
+              CASE WHEN checked_in_date IS NOT NULL THEN to_char(checked_in_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END as checked_in_date
+       FROM registrations WHERE payment_id = $1`,
       [paymentId]
     );
     const converted = formatDatesForResponse(result.rows);

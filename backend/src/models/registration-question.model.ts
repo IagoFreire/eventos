@@ -5,7 +5,10 @@ export class RegistrationQuestionModel {
   // Buscar todas as perguntas de um evento
   static async findByEventId(eventId: string): Promise<RegistrationQuestion[]> {
     const result = await pool.query(
-      'SELECT * FROM registration_questions WHERE event_id = $1 ORDER BY display_order ASC, created_at ASC',
+      `SELECT id, event_id, question_text, question_type, options, is_required, display_order,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at
+       FROM registration_questions WHERE event_id = $1 ORDER BY display_order ASC, created_at ASC`,
       [eventId]
     );
     return result.rows.map(row => ({
@@ -17,7 +20,10 @@ export class RegistrationQuestionModel {
   // Buscar pergunta por ID
   static async findById(id: string): Promise<RegistrationQuestion | null> {
     const result = await pool.query(
-      'SELECT * FROM registration_questions WHERE id = $1',
+      `SELECT id, event_id, question_text, question_type, options, is_required, display_order,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at
+       FROM registration_questions WHERE id = $1`,
       [id]
     );
     if (!result.rows[0]) return null;
@@ -32,7 +38,9 @@ export class RegistrationQuestionModel {
     const result = await pool.query(
       `INSERT INTO registration_questions (event_id, question_text, question_type, options, is_required, display_order)
        VALUES ($1, $2, $3, $4::jsonb, $5, $6)
-       RETURNING *`,
+       RETURNING id, event_id, question_text, question_type, options, is_required, display_order,
+                 to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                 to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at`,
       [
         question.event_id,
         question.question_text,
@@ -73,7 +81,10 @@ export class RegistrationQuestionModel {
     values.push(id);
 
     const result = await pool.query(
-      `UPDATE registration_questions SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
+      `UPDATE registration_questions SET ${fields.join(', ')} WHERE id = $${paramCount} 
+       RETURNING id, event_id, question_text, question_type, options, is_required, display_order,
+                 to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                 to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at`,
       values
     );
 

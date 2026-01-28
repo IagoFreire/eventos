@@ -5,7 +5,10 @@ export class EventModel {
   // Buscar todos os eventos
   static async findAll(): Promise<Event[]> {
     const result = await pool.query(
-      'SELECT * FROM events ORDER BY date DESC'
+      `SELECT id, title, description, date, location, price, image_url, max_participants,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at
+       FROM events ORDER BY date DESC`
     );
     // Buscar datas para cada evento
     const eventsWithDates = await Promise.all(
@@ -20,7 +23,10 @@ export class EventModel {
   // Buscar evento por ID
   static async findById(id: string): Promise<Event | null> {
     const result = await pool.query(
-      'SELECT * FROM events WHERE id = $1',
+      `SELECT id, title, description, date, location, price, image_url, max_participants,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at
+       FROM events WHERE id = $1`,
       [id]
     );
     if (!result.rows[0]) return null;
@@ -43,7 +49,9 @@ export class EventModel {
       const eventResult = await client.query(
         `INSERT INTO events (title, description, date, location, price, image_url, max_participants)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING *`,
+         RETURNING id, title, description, date, location, price, image_url, max_participants,
+                   to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                   to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at`,
         [event.title, event.description, event.date, event.location, event.price, event.image_url, event.max_participants]
       );
       const newEvent = eventResult.rows[0];
@@ -92,7 +100,10 @@ export class EventModel {
 
     values.push(id);
     const result = await pool.query(
-      `UPDATE events SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
+      `UPDATE events SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${paramCount} 
+       RETURNING id, title, description, date, location, price, image_url, max_participants,
+                 to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                 to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at`,
       values
     );
 
@@ -111,7 +122,17 @@ export class EventModel {
   // Buscar configurações do evento
   static async findSettings(eventId: string): Promise<EventSettings | null> {
     const result = await pool.query(
-      'SELECT * FROM event_settings WHERE event_id = $1',
+      `SELECT id, event_id, event_subtitle, event_time, event_title_image_url, event_title_background_image_url, 
+              event_title_text_color, event_title_button_color, event_title_button_text_color, event_title_font_weight,
+              included_items, church_name, church_contact_phone, church_contact_email,
+              church_instagram, church_facebook, church_website,
+              show_contact, show_social, show_contact_phone, show_contact_email,
+              show_social_instagram, show_social_facebook, show_social_website,
+              confirmed_participants, contact_phones,
+              show_included_items, show_confirmed_participants, show_available_spots,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at
+       FROM event_settings WHERE event_id = $1`,
       [eventId]
     );
     if (!result.rows[0]) return null;
@@ -175,7 +196,16 @@ export class EventModel {
         show_confirmed_participants = EXCLUDED.show_confirmed_participants,
         show_available_spots = EXCLUDED.show_available_spots,
         updated_at = NOW()
-      RETURNING *`,
+      RETURNING id, event_id, event_subtitle, event_time, event_title_image_url, event_title_background_image_url, 
+                event_title_text_color, event_title_button_color, event_title_button_text_color, event_title_font_weight,
+                included_items, church_name, church_contact_phone, church_contact_email,
+                church_instagram, church_facebook, church_website,
+                show_contact, show_social, show_contact_phone, show_contact_email,
+                show_social_instagram, show_social_facebook, show_social_website,
+                confirmed_participants, contact_phones,
+                show_included_items, show_confirmed_participants, show_available_spots,
+                to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at`,
       [
         settings.event_id,
         settings.event_subtitle,
@@ -226,7 +256,10 @@ export class EventModel {
   // Métodos para gerenciar datas do evento
   static async findDatesByEventId(eventId: string): Promise<EventDate[]> {
     const result = await pool.query(
-      'SELECT * FROM event_dates WHERE event_id = $1 ORDER BY date ASC',
+      `SELECT id, event_id, date,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at
+       FROM event_dates WHERE event_id = $1 ORDER BY date ASC`,
       [eventId]
     );
     return result.rows;
@@ -237,7 +270,9 @@ export class EventModel {
       `INSERT INTO event_dates (event_id, date)
        VALUES ($1, $2)
        ON CONFLICT (event_id, date) DO UPDATE SET updated_at = NOW()
-       RETURNING *`,
+       RETURNING id, event_id, date,
+                 to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                 to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at`,
       [eventId, date]
     );
     return result.rows[0];
@@ -266,7 +301,10 @@ export class EventModel {
         const placeholders = dates.map((_, index) => `($1, $${index + 2})`).join(', ');
         const params = [eventId, ...dates];
         await client.query(
-          `INSERT INTO event_dates (event_id, date) VALUES ${placeholders} RETURNING *`,
+          `INSERT INTO event_dates (event_id, date) VALUES ${placeholders} 
+           RETURNING id, event_id, date,
+                     to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                     to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at`,
           params
         );
       }

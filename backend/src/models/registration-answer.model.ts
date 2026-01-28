@@ -5,7 +5,10 @@ export class RegistrationAnswerModel {
   // Buscar todas as respostas de uma inscrição
   static async findByRegistrationId(registrationId: string): Promise<RegistrationAnswer[]> {
     const result = await pool.query(
-      'SELECT * FROM registration_answers WHERE registration_id = $1',
+      `SELECT id, registration_id, question_id, answer_text, answer_options,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at
+       FROM registration_answers WHERE registration_id = $1`,
       [registrationId]
     );
     return result.rows.map(row => ({
@@ -17,7 +20,10 @@ export class RegistrationAnswerModel {
   // Buscar resposta por ID
   static async findById(id: string): Promise<RegistrationAnswer | null> {
     const result = await pool.query(
-      'SELECT * FROM registration_answers WHERE id = $1',
+      `SELECT id, registration_id, question_id, answer_text, answer_options,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at
+       FROM registration_answers WHERE id = $1`,
       [id]
     );
     if (!result.rows[0]) return null;
@@ -37,7 +43,9 @@ export class RegistrationAnswerModel {
          answer_text = EXCLUDED.answer_text,
          answer_options = EXCLUDED.answer_options,
          updated_at = NOW()
-       RETURNING *`,
+       RETURNING id, registration_id, question_id, answer_text, answer_options,
+                 to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                 to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at`,
       [
         answer.registration_id,
         answer.question_id,
@@ -70,7 +78,9 @@ export class RegistrationAnswerModel {
              answer_text = EXCLUDED.answer_text,
              answer_options = EXCLUDED.answer_options,
              updated_at = NOW()
-           RETURNING *`,
+           RETURNING id, registration_id, question_id, answer_text, answer_options,
+                     to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                     to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at`,
           [
             answer.registration_id,
             answer.question_id,

@@ -6,7 +6,10 @@ export class UserModel {
   // Buscar todos os usuários
   static async findAll(): Promise<User[]> {
     const result = await pool.query(
-      'SELECT id, email, role, created_at, updated_at FROM users ORDER BY created_at DESC'
+      `SELECT id, email, role,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at
+       FROM users ORDER BY created_at DESC`
     );
     return result.rows;
   }
@@ -14,7 +17,10 @@ export class UserModel {
   // Buscar usuário por ID
   static async findById(id: string): Promise<User | null> {
     const result = await pool.query(
-      'SELECT id, email, role, created_at, updated_at FROM users WHERE id = $1',
+      `SELECT id, email, role,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at
+       FROM users WHERE id = $1`,
       [id]
     );
     return result.rows[0] || null;
@@ -35,7 +41,9 @@ export class UserModel {
     const result = await pool.query(
       `INSERT INTO users (email, password_hash, role)
        VALUES ($1, $2, $3)
-       RETURNING id, email, role, created_at, updated_at`,
+       RETURNING id, email, role,
+                 to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                 to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at`,
       [email, hashedPassword, role]
     );
     return result.rows[0];
@@ -72,7 +80,10 @@ export class UserModel {
 
     values.push(id);
     const result = await pool.query(
-      `UPDATE users SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING id, email, role, created_at, updated_at`,
+      `UPDATE users SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${paramCount} 
+       RETURNING id, email, role,
+                 to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+                 to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at`,
       values
     );
 

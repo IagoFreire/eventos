@@ -356,7 +356,8 @@ const Admin: React.FC = () => {
   // Função para formatar data/hora no fuso horário do Brasil
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
+    // Usar toLocaleString para incluir data e hora, com timeZone para converter corretamente
+    return date.toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
